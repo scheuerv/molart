@@ -1,0 +1,25 @@
+#app {
+  vertical-align: top;
+  left: 50%;
+  display: inline-block;
+  width: calc(50% - 2px);
+  height: 100%;
+  top: 0;
+  position: absolute;
+}
+
+#pv-pdb {
+  vertical-align: top;
+  left: 0;
+  display: inline-block;
+  width: calc(50% - 2px);
+  height: 100%;
+  top: 0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
