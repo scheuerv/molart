@@ -34,7 +34,16 @@ export class TypedMolArt {
             url: `https://files.rcsb.org/download/${e.detail.pdbIds[0]}.cif`,
             assemblyId: '1'
         }));
-
+        this.protvistaPdb.addEventListener("protvista-click", e => {
+            const accession = e.detail?.feature?.accession;
+            const accessionFromLabel = e.detail?.feature?.label?.id;
+            if (accession !== undefined && accession === accessionFromLabel) {
+                this.load({
+                    url: `https://files.rcsb.org/download/${e.detail.feature.label.id}.cif`,
+                    assemblyId: '1'
+                });
+            }
+        });
 
         // this.load({url: 'https://files.rcsb.org/download/3pqr.cif', assemblyId: '1'})
 
