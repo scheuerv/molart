@@ -14,14 +14,17 @@ const sharedConfig = {
       {
         loader: 'file-loader',
         test: /\.(woff2?|ttf|otf|eot|svg|html)$/,
-        include: [path.resolve(__dirname, 'src/project')],
         options: {
           name: '[name].[ext]'
         }
       },
       {
-        test: /\.(s*)css$/,
+        test: /\.scss$/,
         use: [MiniCssExtractPlugin.loader, 'css-loader', 'resolve-url-loader', 'sass-loader']
+      },
+      {
+        test: /\.css$/,
+        use: [MiniCssExtractPlugin.loader, 'css-loader']
       }
     ]
   },
@@ -42,8 +45,7 @@ const sharedConfig = {
       path.resolve(__dirname, 'src/')
     ],
     alias: {
-      Molstar: 'molstar/lib',
-      "ProtvistaPdb": "protvista-pdb/dist/protvista-pdb-2.0.0"
+      Molstar: 'molstar/lib'
     },
   }
 }

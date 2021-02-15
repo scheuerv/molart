@@ -13,13 +13,18 @@
     <script type="text/javascript" src="./index.js"></script>
 </head>
 <body>
-<protvista-pdb id="pv-pdb" accession="P02699"></protvista-pdb>
-
+<div id="pv-pdb"></div>
 <div id="app"></div>
-<div id='controls'></div>
 
 <script>
-    TypedMolArt.init('app')
+
+    TypedMolArt.init('app', 'pv-pdb')
+    TypedMolArt.loadUniprot('P02699');
+
+    function loadUniprot(uniprotId) {
+        TypedMolArt.loadUniprot(uniprotId);
+    }
+
 </script>
 
 

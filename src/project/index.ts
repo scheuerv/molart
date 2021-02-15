@@ -1,7 +1,8 @@
 (globalThis as any).d3 = require("d3")
 import {createPlugin, DefaultPluginSpec} from 'Molstar/mol-plugin';
 import {PluginContext} from 'Molstar/mol-plugin/context';
-import 'ProtvistaPdb';
+import {ProtvistaPDB} from 'protvista-pdb/src/protvista-pdb';
+import 'protvista-pdb/src/index';
 import "./index.html";
 import {BuiltInTrajectoryFormat} from "Molstar/mol-plugin-state/formats/trajectory";
 import {Asset} from "Molstar/mol-util/assets";
@@ -11,11 +12,13 @@ require('./main.scss');
 
 type LoadParams = { url: string, format?: BuiltInTrajectoryFormat, isBinary?: boolean, assemblyId?: string }
 
-
 export class TypedMolArt {
     plugin: PluginContext;
+    protvistaPdb: ProtvistaPDB;
+    protvistaWrapper: HTMLElement;
 
-    init(target: string | HTMLElement) {
+    init(target: string | HTMLElement, targetProtvista: string) {
+        this.protvistaWrapper = document.getElementById(targetProtvista);
         this.plugin = createPlugin(typeof target === 'string' ? document.getElementById(target)! : target, {
             ...DefaultPluginSpec,
             layout: {
@@ -26,12 +29,18 @@ export class TypedMolArt {
                 controls: {left: 'none', right: 'none', top: 'none', bottom: 'none'},
             },
         });
+        this.protvistaPdb = document.createElement("protvista-pdb");
 
 
         this.load({url: 'https://files.rcsb.org/download/3pqr.cif', assemblyId: '1'})
 
     }
 
+    loadUniprot(uniprotId: string) {
+        this.protvistaPdb.setAttribute("accession", uniprotId);
+        this.protvistaWrapper.append(this.protvistaPdb);
+
+    }
 
     async load({url, format = 'mmcif', isBinary = false, assemblyId = ''}: LoadParams) {
         await this.plugin.clear();

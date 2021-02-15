@@ -13,7 +13,7 @@
   "dependencies": {
     "d3": "^4.13.0",
     "molstar": "^1.2.7",
-    "protvista-pdb": "^2.0.0"
+    "protvista-pdb": "git://github.com/scheuerv/protvista-pdb.git"
   },
   "devDependencies": {
     "@babel/core": "^7.3.3",
