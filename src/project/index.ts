@@ -30,9 +30,13 @@ export class TypedMolArt {
             },
         });
         this.protvistaPdb = document.createElement("protvista-pdb");
+        this.protvistaPdb.addEventListener("rendered", e => this.load({
+            url: `https://files.rcsb.org/download/${e.detail.pdbIds[0]}.cif`,
+            assemblyId: '1'
+        }));
 
 
-        this.load({url: 'https://files.rcsb.org/download/3pqr.cif', assemblyId: '1'})
+        // this.load({url: 'https://files.rcsb.org/download/3pqr.cif', assemblyId: '1'})
 
     }
 
