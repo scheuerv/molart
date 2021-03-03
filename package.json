@@ -6,12 +6,14 @@
     "build": "npm run build-webpack",
     "build-webpack": "webpack --mode development",
     "watch": "npm run watch-webpack",
-    "watch-webpack": "webpack -w --mode development"
+    "watch-webpack": "webpack -w --mode development",
+    "serve": "http-server -p 1339 ./build/project"
   },
   "keywords": [],
   "license": "Apache-2.0",
   "dependencies": {
-    "d3": "^4.13.0",
+    "d3": "^5.16.0",
+    "http-server": "^0.12.3",
     "molstar": "^1.2.7",
     "protvista-pdb": "git://github.com/scheuerv/protvista-pdb.git"
   },

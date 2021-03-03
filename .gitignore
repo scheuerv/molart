@@ -5,3 +5,6 @@ node_modules
 build
 package-lock.json
 .idea
+.yalc
+yalc.lock
+.vscode/launch.json
