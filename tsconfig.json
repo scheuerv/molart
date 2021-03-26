@@ -1,14 +1,15 @@
 {
   "compilerOptions": {
     "composite": false,
-    "target": "es5",
-    "outDir": "build/src",
+    "target": "es2020",
     "jsx": "react",
+    "outDir": "dist/",
     "sourceMap": true,
     "strictNullChecks": false,
     "module": "commonjs",
     "moduleResolution": "node",
     "baseUrl": ".",
+    "esModuleInterop": true,
     "alwaysStrict": false,
     "noImplicitAny": false,
     "noImplicitThis": false,

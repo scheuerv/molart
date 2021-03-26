@@ -3,13 +3,24 @@ const ExtraWatchWebpackPlugin = require('extra-watch-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const sharedConfig = {
+  mode: 'development',
+  devServer: {
+    port: 1341
+  },
   module: {
     rules: [
       {
         loader: 'ts-loader',
-        test: /\.(ts|tsx)$/,
-        include: [path.resolve(__dirname, 'src/project')],
-        exclude: [path.resolve(__dirname, 'node_modules')]
+        test: /\.(ts|tsx)$/,        
+        include: [
+          path.resolve(__dirname, 'src'),
+          path.resolve(__dirname, 'node_modules/uniprot-nightingale/src'),
+          path.resolve(__dirname, 'node_modules/protvista-variation-adapter/src/variants.ts')
+          ],
+        options: {
+          allowTsInNodeModules: true,
+          configFile: path.resolve(__dirname, 'tsconfig.json')
+        }
       },
       {
         loader: 'file-loader',
@@ -31,12 +42,13 @@ const sharedConfig = {
   plugins: [
     new ExtraWatchWebpackPlugin({
       files: [
-        './src/**/*.scss',
+        './src/**/*.s?css',
         './src/**/*.html',
-        './tsconfig.json'
+        './tsconfig.json',
+        './node_modules/uniprot-nightingale/**'
       ],
     }),
-    new MiniCssExtractPlugin({filename: "molstar.css"})
+    new MiniCssExtractPlugin({ filename: "main.css" })
   ],
   resolve: {
     extensions: ['.ts', '.js'],
@@ -50,21 +62,21 @@ const sharedConfig = {
   }
 }
 
-function createEntryPoint(name, dir, out) {
+function createEntryPoint(name) {
   return {
-    devtool: "source-map",
-    node: {fs: 'empty'},
-    entry: ["@babel/polyfill", path.resolve(__dirname, `src/project/index.ts`)],
+    devtool: "inline-source-map",
+    entry: ["@babel/polyfill", path.resolve(__dirname, `src/index.ts`)],
     output: {
-      library: 'App',
-      libraryTarget: 'umd',
       filename: `${name}.js`,
-      path: path.resolve(__dirname, `build/${out}`)
+      path: path.resolve(__dirname, `dist/`)
+    },
+    externals: {
+        "fs": 'require("fs")'
     },
     ...sharedConfig
   }
 }
 
 module.exports = [
-  createEntryPoint("index", "project", "project")
+  createEntryPoint("index")
 ]
