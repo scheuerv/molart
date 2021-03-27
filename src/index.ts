@@ -119,18 +119,14 @@ export class TypedMolArt {
         }, { state: { isGhost: true } });
 
         const trajectory = await this.plugin.builders.structure.parseTrajectory(data, format);
+        const model = await this.plugin.builders.structure.createModel(trajectory);
+        const structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
 
-        await this.plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default', {
-            structure: assemblyId ? {
-                name: 'assembly',
-                params: { id: assemblyId }
-            } : {
-                name: 'model',
-                params: {}
-            },
-            showUnitcell: false,
-            representationPreset: 'auto'
-        });
+        const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(structure, 'polymer');
+        if (polymer) {
+            await this.plugin.builders.structure.representation.addRepresentation(polymer, { type: 'cartoon', color: 'chain-id' });
+            await this.plugin.builders.structure.representation.addRepresentation(polymer, { type: 'molecular-surface', typeParams: { alpha: 0.25 }, color: 'uniform' });
+        }
     }
 }
 
