@@ -1,5 +1,6 @@
 import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
-import { createPlugin, DefaultPluginSpec } from 'Molstar/mol-plugin';
+import { createPlugin } from 'Molstar/mol-plugin-ui';
+import { DefaultPluginUISpec } from 'Molstar/mol-plugin-ui/spec';
 import { PluginContext } from 'Molstar/mol-plugin/context';
 import { TrackManager } from "uniprot-nightingale/src/index";
 import PDBParser from "uniprot-nightingale/src/parsers/pdb-parser";
@@ -8,11 +9,14 @@ import { BuiltInTrajectoryFormat } from "Molstar/mol-plugin-state/formats/trajec
 import { Asset } from "Molstar/mol-util/assets";
 import { StructureElement, StructureProperties as Props, StructureSelection } from "Molstar/mol-model/structure";
 import { Loci } from "Molstar/mol-model/structure/structure/element/loci";
+import { setStructureOverpaint } from "Molstar/mol-plugin-state/helpers/structure-overpaint"
 
 (globalThis as any).d3 = require("d3")
 import HoverEvent = Canvas3D.HoverEvent;
 import SMRParser from "uniprot-nightingale/src/parsers/SMR-parser";
 import { Script } from "molstar/lib/mol-script/script";
+import { StructureHierarchyManager } from "molstar/lib/mol-plugin-state/manager/structure/hierarchy";
+import { Color, ColorList } from "molstar/lib/mol-util/color/color";
 
 require('Molstar/mol-plugin-ui/skin/light.scss');
 require('./main.scss');
@@ -27,13 +31,12 @@ export class TypedMolArt {
     init(target: string | HTMLElement, targetProtvista: string) {
         this.protvistaWrapper = document.getElementById(targetProtvista);
         this.plugin = createPlugin(typeof target === 'string' ? document.getElementById(target)! : target, {
-            ...DefaultPluginSpec,
+            ...DefaultPluginUISpec(),
             layout: {
                 initial: {
                     isExpanded: false,
                     showControls: false
-                },
-                controls: { left: 'none', right: 'none', top: 'none', bottom: 'none' },
+                }
             },
         });
 
