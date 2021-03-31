@@ -7,16 +7,18 @@ import PDBParser from "uniprot-nightingale/src/parsers/pdb-parser";
 import "./index.html";
 import { BuiltInTrajectoryFormat } from "Molstar/mol-plugin-state/formats/trajectory";
 import { Asset } from "Molstar/mol-util/assets";
-import { StructureElement, StructureProperties as Props, StructureSelection } from "Molstar/mol-model/structure";
+import { Structure, StructureElement, StructureProperties as Props, StructureSelection } from "Molstar/mol-model/structure";
 import { Loci } from "Molstar/mol-model/structure/structure/element/loci";
-import { setStructureOverpaint } from "Molstar/mol-plugin-state/helpers/structure-overpaint"
-
 (globalThis as any).d3 = require("d3")
 import HoverEvent = Canvas3D.HoverEvent;
 import SMRParser from "uniprot-nightingale/src/parsers/SMR-parser";
 import { Script } from "molstar/lib/mol-script/script";
-import { StructureHierarchyManager } from "molstar/lib/mol-plugin-state/manager/structure/hierarchy";
-import { Color, ColorList } from "molstar/lib/mol-util/color/color";
+import { Color } from "molstar/lib/mol-util/color/color";
+import { StateTransforms } from "molstar/lib/mol-plugin-state/transforms";
+import { Bundle } from "molstar/lib/mol-model/structure/structure/element/bundle";
+import { StateObjectSelector } from "molstar/lib/mol-state";
+import { PluginStateObject } from "molstar/lib/mol-plugin-state/objects";
+import { TrackFragment } from "uniprot-nightingale/src/manager/track-manager";
 
 require('Molstar/mol-plugin-ui/skin/light.scss');
 require('./main.scss');
@@ -27,6 +29,7 @@ export class TypedMolArt {
     plugin: PluginContext;
     protvistaWrapper: HTMLElement;
     trackManager: TrackManager;
+    molecularSurfaceRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D>;
 
     init(target: string | HTMLElement, targetProtvista: string) {
         this.protvistaWrapper = document.getElementById(targetProtvista);
@@ -66,26 +69,19 @@ export class TypedMolArt {
         this.trackManager.getParsersByType(SMRParser)[0].onLabelClick.on(smrOutput => {
             this.loadStructure(smrOutput.pdbId);
         });
-        this.trackManager.onResidueMouseOver.on(resNum => {
+        this.trackManager.onFragmentClick.on(fragment => {
+            this.overPaintFragments([fragment]);
+        });
+        this.trackManager.onArrowClick.on(fragments => {
+            this.overPaintFragments(fragments);
+        })
+        this.trackManager.onResidueMouseOver.on(async resNum => {
             const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
             if (!data) return;
-            const sel = Script.getStructureSelection(
-                (Q) =>
-                    Q.struct.generator.atomGroups({
-                        "residue-test": Q.core.logic.or(
-                            [
-                                Q.core.rel.inRange([
-                                    Q.struct.atomProperty.macromolecular.auth_seq_id(),
-                                    resNum,
-                                    resNum,
-                                ])
-                            ]
-                        ),
-                    }),
-                data
-            );
+            const sel = this.selectFragment(resNum, resNum, data);
             const loci = StructureSelection.toLociWithSourceUnits(sel);
             this.plugin.managers.interactivity.lociHighlights.highlightOnly({ loci });
+
         });
         this.trackManager.onFragmentMouseOut.on(resNum => {
             this.plugin.managers.interactivity.lociHighlights.clearHighlights();
@@ -113,8 +109,46 @@ export class TypedMolArt {
     loadUniprot(uniprotId: string) {
         this.trackManager.render(uniprotId, this.protvistaWrapper);
     }
-
+    private selectFragment(from: number, to: number, data: Structure) {
+        const sel = Script.getStructureSelection(
+            (Q) =>
+                Q.struct.generator.atomGroups({
+                    "residue-test": Q.core.logic.or(
+                        [
+                            Q.core.rel.inRange([
+                                Q.struct.atomProperty.macromolecular.auth_seq_id(),
+                                from,
+                                to,
+                            ])
+                        ]
+                    ),
+                }),
+            data
+        );
+        return sel;
+    }
+    private overPaintFragments(fragments: TrackFragment[]) {
+        const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
+        if (!data) return;
+        const params = []
+        fragments.forEach(fragment => {
+            const sel = this.selectFragment(fragment.start, fragment.end, data);
+            const loci = StructureSelection.toLociWithSourceUnits(sel);
+            const bundle = Bundle.fromLoci(loci);
+            params.push({
+                bundle: bundle,
+                color: Color(parseInt(fragment.color.slice(1), 16)),
+                clear: false
+            });
+        });
+        const update = this.plugin.build();
+        update.to(this.molecularSurfaceRepr).apply(StateTransforms.Representation.OverpaintStructureRepresentation3DFromBundle, {
+            layers: params
+        });
+        update.commit();
+    }
     async load({ url, format = 'mmcif', isBinary = false, assemblyId = '' }: LoadParams) {
+        this.molecularSurfaceRepr = undefined;
         await this.plugin.clear();
         const data = await this.plugin.builders.data.download({
             url: Asset.Url(url),
@@ -127,8 +161,11 @@ export class TypedMolArt {
 
         const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(structure, 'polymer');
         if (polymer) {
-            await this.plugin.builders.structure.representation.addRepresentation(polymer, { type: 'cartoon', color: 'chain-id' });
-            await this.plugin.builders.structure.representation.addRepresentation(polymer, { type: 'molecular-surface', typeParams: { alpha: 0.25 }, color: 'uniform' });
+            await this.plugin.builders.structure.representation.addRepresentation(polymer, {
+                type: 'cartoon', color: 'chain-id',
+            });
+            this.molecularSurfaceRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, { type: 'molecular-surface', typeParams: { alpha: 0.25 }, color: 'uniform' });
+
         }
     }
 }
