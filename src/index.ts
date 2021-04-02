@@ -169,12 +169,19 @@ export class TypedMolArt {
         const model = await this.plugin.builders.structure.createModel(trajectory);
         const structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
         const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(structure, 'polymer');
+        const water = await this.plugin.builders.structure.tryCreateComponentStatic(structure, 'water');
         if (polymer) {
             this.cartoonRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, {
                 type: 'cartoon', color: 'chain-id',
             });
             this.molecularSurfaceRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, {
                 type: 'molecular-surface', typeParams: { alpha: 0.25 }, color: 'uniform'
+            });
+        }
+        if(water)
+        {
+            await this.plugin.builders.structure.representation.addRepresentation(water, {
+                type: 'ball-and-stick', color: 'element-symbol',
             });
         }
     }
