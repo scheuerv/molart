@@ -29,10 +29,15 @@ export class TypedMolArt {
     plugin: PluginContext;
     protvistaWrapper: HTMLElement;
     trackManager: TrackManager;
-    molecularSurfaceRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D>;
+    molecularSurfaceRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D> | undefined;
 
     init(target: string | HTMLElement, targetProtvista: string) {
-        this.protvistaWrapper = document.getElementById(targetProtvista);
+        const wrapper = document.getElementById(targetProtvista);
+        if (!wrapper) {
+            throw new Error("Invalid Protvista target Id");
+        }
+        this.protvistaWrapper = wrapper;
+
         this.plugin = createPlugin(typeof target === 'string' ? document.getElementById(target)! : target, {
             ...DefaultPluginUISpec(),
             layout: {
@@ -86,7 +91,7 @@ export class TypedMolArt {
         this.trackManager.onFragmentMouseOut.on(resNum => {
             this.plugin.managers.interactivity.lociHighlights.clearHighlights();
         });
-        this.plugin.canvas3d.interaction.hover.subscribe((e: HoverEvent) => {
+        this.plugin.canvas3d?.interaction.hover.subscribe((e: HoverEvent) => {
             if (e.current?.loci.kind == 'element-loci') {
                 let structureElement = StructureElement.Stats.ofLoci(e.current.loci as Loci);
                 let location = structureElement.firstResidueLoc;
@@ -128,9 +133,10 @@ export class TypedMolArt {
         return sel;
     }
     private overPaintFragments(fragments: TrackFragment[]) {
+        if (!this.molecularSurfaceRepr) return;
         const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
         if (!data) return;
-        const params = []
+        const params: { bundle: StructureElement.Bundle, color: Color, clear: boolean }[] = []
         fragments.forEach(fragment => {
             const sel = this.selectFragment(fragment.start, fragment.end, data);
             const loci = StructureSelection.toLociWithSourceUnits(sel);
@@ -154,18 +160,15 @@ export class TypedMolArt {
             url: Asset.Url(url),
             isBinary
         }, { state: { isGhost: true } });
-
         const trajectory = await this.plugin.builders.structure.parseTrajectory(data, format);
         const model = await this.plugin.builders.structure.createModel(trajectory);
         const structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
-
         const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(structure, 'polymer');
         if (polymer) {
             await this.plugin.builders.structure.representation.addRepresentation(polymer, {
                 type: 'cartoon', color: 'chain-id',
             });
             this.molecularSurfaceRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, { type: 'molecular-surface', typeParams: { alpha: 0.25 }, color: 'uniform' });
-
         }
     }
 }
