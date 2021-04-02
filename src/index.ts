@@ -30,6 +30,7 @@ export class TypedMolArt {
     protvistaWrapper: HTMLElement;
     trackManager: TrackManager;
     molecularSurfaceRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D> | undefined;
+    cartoonRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D> | undefined;
 
     init(target: string | HTMLElement, targetProtvista: string) {
         const wrapper = document.getElementById(targetProtvista);
@@ -133,7 +134,7 @@ export class TypedMolArt {
         return sel;
     }
     private overPaintFragments(fragments: TrackFragment[]) {
-        if (!this.molecularSurfaceRepr) return;
+        if (!this.molecularSurfaceRepr || !this.cartoonRepr) return;
         const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
         if (!data) return;
         const params: { bundle: StructureElement.Bundle, color: Color, clear: boolean }[] = []
@@ -151,10 +152,14 @@ export class TypedMolArt {
         update.to(this.molecularSurfaceRepr).apply(StateTransforms.Representation.OverpaintStructureRepresentation3DFromBundle, {
             layers: params
         });
+        update.to(this.cartoonRepr).apply(StateTransforms.Representation.OverpaintStructureRepresentation3DFromBundle, {
+            layers: params
+        });
         update.commit();
     }
     async load({ url, format = 'mmcif', isBinary = false, assemblyId = '' }: LoadParams) {
         this.molecularSurfaceRepr = undefined;
+        this.cartoonRepr = undefined;
         await this.plugin.clear();
         const data = await this.plugin.builders.data.download({
             url: Asset.Url(url),
@@ -165,10 +170,12 @@ export class TypedMolArt {
         const structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
         const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(structure, 'polymer');
         if (polymer) {
-            await this.plugin.builders.structure.representation.addRepresentation(polymer, {
+            this.cartoonRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, {
                 type: 'cartoon', color: 'chain-id',
             });
-            this.molecularSurfaceRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, { type: 'molecular-surface', typeParams: { alpha: 0.25 }, color: 'uniform' });
+            this.molecularSurfaceRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, {
+                type: 'molecular-surface', typeParams: { alpha: 0.25 }, color: 'uniform'
+            });
         }
     }
 }
