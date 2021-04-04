@@ -12,6 +12,7 @@
     "keywords": [],
     "license": "Apache-2.0",
     "dependencies": {
+        "color-blend": "^3.0.1",
         "d3": "^5.16.0",
         "http-server": "^0.12.3",
         "molstar": "^2.0.1",

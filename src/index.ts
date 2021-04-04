@@ -19,6 +19,8 @@ import { Bundle } from "molstar/lib/mol-model/structure/structure/element/bundle
 import { StateObjectSelector } from "molstar/lib/mol-state";
 import { PluginStateObject } from "molstar/lib/mol-plugin-state/objects";
 import { TrackFragment } from "uniprot-nightingale/src/manager/track-manager";
+import { mixFragmentColors } from "./fragment-color-mixer";
+
 
 require('Molstar/mol-plugin-ui/skin/light.scss');
 require('./main.scss');
@@ -76,10 +78,10 @@ export class TypedMolArt {
             this.loadStructure(smrOutput.pdbId);
         });
         this.trackManager.onFragmentClick.on(fragment => {
-            this.overPaintFragments([fragment]);
+            this.overpaintFragments([fragment]);
         });
         this.trackManager.onArrowClick.on(fragments => {
-            this.overPaintFragments(fragments);
+            this.overpaintFragments(fragments);
         })
         this.trackManager.onResidueMouseOver.on(async resNum => {
             const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
@@ -106,15 +108,18 @@ export class TypedMolArt {
             }
         });
     }
+
     loadStructure(pdbId: string) {
         this.load({
             url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdbId}_updated.cif`,
             assemblyId: '1'
-        })
+        });
     }
+
     loadUniprot(uniprotId: string) {
         this.trackManager.render(uniprotId, this.protvistaWrapper);
     }
+
     private selectFragment(from: number, to: number, data: Structure) {
         const sel = Script.getStructureSelection(
             (Q) =>
@@ -133,12 +138,13 @@ export class TypedMolArt {
         );
         return sel;
     }
-    private overPaintFragments(fragments: TrackFragment[]) {
+
+    private overpaintFragments(fragments: TrackFragment[]) {
         if (!this.molecularSurfaceRepr || !this.cartoonRepr) return;
         const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
         if (!data) return;
         const params: { bundle: StructureElement.Bundle, color: Color, clear: boolean }[] = []
-        fragments.forEach(fragment => {
+        mixFragmentColors(fragments).forEach(fragment => {
             const sel = this.selectFragment(fragment.start, fragment.end, data);
             const loci = StructureSelection.toLociWithSourceUnits(sel);
             const bundle = Bundle.fromLoci(loci);
@@ -157,6 +163,7 @@ export class TypedMolArt {
         });
         update.commit();
     }
+
     async load({ url, format = 'mmcif', isBinary = false, assemblyId = '' }: LoadParams) {
         this.molecularSurfaceRepr = undefined;
         this.cartoonRepr = undefined;
@@ -178,8 +185,7 @@ export class TypedMolArt {
                 type: 'molecular-surface', typeParams: { alpha: 0.25 }, color: 'uniform'
             });
         }
-        if(water)
-        {
+        if (water) {
             await this.plugin.builders.structure.representation.addRepresentation(water, {
                 type: 'ball-and-stick', color: 'element-symbol',
             });
