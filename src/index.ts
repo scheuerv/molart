@@ -20,6 +20,7 @@ import { StateObjectSelector } from "molstar/lib/mol-state";
 import { PluginStateObject } from "molstar/lib/mol-plugin-state/objects";
 import { TrackFragment } from "uniprot-nightingale/src/manager/track-manager";
 import { mixFragmentColors } from "./fragment-color-mixer";
+import d3 = require('d3');
 
 
 require('Molstar/mol-plugin-ui/skin/light.scss');
@@ -28,20 +29,34 @@ require('./main.scss');
 type LoadParams = { url: string, format?: BuiltInTrajectoryFormat, isBinary?: boolean, assemblyId?: string }
 
 export class TypedMolArt {
-    plugin: PluginContext;
-    protvistaWrapper: HTMLElement;
-    trackManager: TrackManager;
-    molecularSurfaceRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D> | undefined;
-    cartoonRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D> | undefined;
+    private plugin: PluginContext;
+    private protvistaWrapper: HTMLElement;
+    private target: HTMLElement;
+    private trackManager: TrackManager;
+    private molecularSurfaceRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D> | undefined;
+    private cartoonRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D> | undefined;
+    private previousWindowWidth: number | undefined = undefined;
+    private readonly minWindowWidth = 1500;
 
     init(target: string | HTMLElement, targetProtvista: string) {
+        this.target = typeof target === 'string' ? document.getElementById(target)! : target;
         const wrapper = document.getElementById(targetProtvista);
         if (!wrapper) {
             throw new Error("Invalid Protvista target Id");
         }
         this.protvistaWrapper = wrapper;
-
-        this.plugin = createPlugin(typeof target === 'string' ? document.getElementById(target)! : target, {
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                if (entry.contentBoxSize[0]) {
+                    if (this.previousWindowWidth && this.previousWindowWidth <= this.minWindowWidth) {
+                        d3.select(this.target)
+                            .style('top', entry.contentBoxSize[0].blockSize + 'px');
+                    }
+                }
+            }
+        });
+        resizeObserver.observe(this.protvistaWrapper);
+        this.plugin = createPlugin(this.target, {
             ...DefaultPluginUISpec(),
             layout: {
                 initial: {
@@ -104,8 +119,28 @@ export class TypedMolArt {
                 this.trackManager.highlightOff();
             }
         });
+        this.trackManager.onRendered.on(this.windowResize.bind(this));
+        window.addEventListener('resize', this.windowResize.bind(this));
     }
-
+    private windowResize() {
+        const windowWidth = window.innerWidth;
+        if (windowWidth <= this.minWindowWidth && (!this.previousWindowWidth || this.previousWindowWidth > this.minWindowWidth)) {
+            d3.select(this.target)
+                .style('left', '0')
+                .style('top', this.protvistaWrapper.offsetHeight + 'px')
+                .style('width', '100%');
+            d3.select(this.protvistaWrapper).style('width', '100%');
+        }
+        else if (windowWidth > this.minWindowWidth && this.previousWindowWidth && this.previousWindowWidth <= this.minWindowWidth) {
+            d3.select(this.target)
+                .style('left', '50%')
+                .style('top', '0')
+                .style('width', 'calc(50% - 2px)');
+            d3.select(this.protvistaWrapper).style('width', 'calc(50% - 2px)');
+        }
+        this.previousWindowWidth = windowWidth;
+        this.plugin.handleResize();
+    }
     loadStructure(pdbId: string) {
         this.load({
             url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdbId}_updated.cif`,
