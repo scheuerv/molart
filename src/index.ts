@@ -77,12 +77,9 @@ export class TypedMolArt {
         this.trackManager.getParsersByType(SMRParser)[0].onLabelClick.on(smrOutput => {
             this.loadStructure(smrOutput.pdbId);
         });
-        this.trackManager.onFragmentClick.on(fragment => {
-            this.overpaintFragments([fragment]);
-        });
-        this.trackManager.onArrowClick.on(fragments => {
+        this.trackManager.onHighlightChange.on(fragments => {
             this.overpaintFragments(fragments);
-        })
+        });
         this.trackManager.onResidueMouseOver.on(async resNum => {
             const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
             if (!data) return;
