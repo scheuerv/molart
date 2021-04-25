@@ -68,29 +68,39 @@ export class TypedMolArt {
 
         this.trackManager = TrackManager.createDefault();
         Promise.all([
-            new Promise<string>((resolve) => {
+            new Promise<LoadParams>((resolve) => {
                 this.trackManager.getParsersByType(PDBParser)[0].onDataLoaded.once(pdbOutputs => {
-                    resolve(pdbOutputs[0]?.pdbId);
+                    resolve({
+                        url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdbOutputs[0]?.pdbId}_updated.cif`
+                    });
                 });
             }),
-            new Promise<string>((resolve) => {
+            new Promise<LoadParams>((resolve) => {
                 this.trackManager.getParsersByType(SMRParser)[0].onDataLoaded.once(smrOutputs => {
-                    resolve(smrOutputs[0]?.pdbId);
+                    resolve({
+                        url: smrOutputs[0].coordinatesFile,
+                        format: 'pdb'
+                    });
                 });
             })
         ]).then(results => {
             for (const result of results) {
                 if (result) {
-                    this.loadStructure(result);
+                    this.load(result);
                     break;
                 }
             }
         });
         this.trackManager.getParsersByType(PDBParser)[0].onLabelClick.on(pdbOutput => {
-            this.loadStructure(pdbOutput.pdbId);
+            this.load({
+                url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdbOutput.pdbId}_updated.cif`
+            });
         });
         this.trackManager.getParsersByType(SMRParser)[0].onLabelClick.on(smrOutput => {
-            this.loadStructure(smrOutput.pdbId);
+            this.load({
+                url: smrOutput.coordinatesFile,
+                format: 'pdb'
+            });
         });
         this.trackManager.onHighlightChange.on(fragments => {
             this.overpaintFragments(fragments);
@@ -140,12 +150,6 @@ export class TypedMolArt {
         }
         this.previousWindowWidth = windowWidth;
         this.plugin.handleResize();
-    }
-    loadStructure(pdbId: string) {
-        this.load({
-            url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdbId}_updated.cif`,
-            assemblyId: '1'
-        });
     }
 
     loadUniprot(uniprotId: string) {

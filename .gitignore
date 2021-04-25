@@ -3,7 +3,6 @@
 # Useful .gitignore templates: https://github.com/github/gitignore
 node_modules
 build
-package-lock.json
 .idea
 .yalc
 yalc.lock
