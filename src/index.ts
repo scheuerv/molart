@@ -21,6 +21,7 @@ import { PluginStateObject } from "molstar/lib/mol-plugin-state/objects";
 import { TrackFragment } from "uniprot-nightingale/src/manager/track-manager";
 import { mixFragmentColors } from "./fragment-color-mixer";
 import d3 = require('d3');
+import {Mapping} from "uniprot-nightingale/src/parsers/track-parser"
 
 
 require('Molstar/mol-plugin-ui/skin/light.scss');
@@ -37,6 +38,7 @@ export class TypedMolArt {
     private cartoonRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D> | undefined;
     private previousWindowWidth: number | undefined = undefined;
     private readonly minWindowWidth = 1500;
+    private structureMapping: Mapping;
 
     init(target: string | HTMLElement, targetProtvista: string) {
         this.target = typeof target === 'string' ? document.getElementById(target)! : target;
@@ -70,13 +72,15 @@ export class TypedMolArt {
         Promise.all([
             new Promise<LoadParams>((resolve) => {
                 this.trackManager.getParsersByType(PDBParser)[0].onDataLoaded.once(pdbOutputs => {
+                    this.structureMapping = pdbOutputs[0].mapping;
                     resolve({
-                        url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdbOutputs[0]?.pdbId}_updated.cif`
+                        url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdbOutputs[0].pdbId}_updated.cif`
                     });
                 });
             }),
             new Promise<LoadParams>((resolve) => {
                 this.trackManager.getParsersByType(SMRParser)[0].onDataLoaded.once(smrOutputs => {
+                    this.structureMapping = smrOutputs[0].mapping;
                     resolve({
                         url: smrOutputs[0].coordinatesFile,
                         format: 'pdb'
@@ -92,11 +96,13 @@ export class TypedMolArt {
             }
         });
         this.trackManager.getParsersByType(PDBParser)[0].onLabelClick.on(pdbOutput => {
+            this.structureMapping = pdbOutput.mapping;
             this.load({
                 url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdbOutput.pdbId}_updated.cif`
             });
         });
         this.trackManager.getParsersByType(SMRParser)[0].onLabelClick.on(smrOutput => {
+            this.structureMapping = smrOutput.mapping;
             this.load({
                 url: smrOutput.coordinatesFile,
                 format: 'pdb'
@@ -121,9 +127,14 @@ export class TypedMolArt {
                 let structureElement = StructureElement.Stats.ofLoci(e.current.loci as Loci);
                 let location = structureElement.firstResidueLoc;
                 if (location.unit) {
-                    var label_seq_id = Props.residue.label_seq_id(location);
-                    var auth_seq_id = Props.residue.auth_seq_id(location);
-                    this.trackManager.highlight(label_seq_id, auth_seq_id);
+                    var authSeqId = Props.residue.auth_seq_id(location);
+                    const position = authSeqId - this.structureMapping.pdbStart + this.structureMapping.uniprotStart;
+                    if (position >= this.structureMapping.uniprotStart && position <= this.structureMapping.uniprotEnd) {
+                        this.trackManager.highlight(position, position);
+                    }
+                    else {
+                        this.trackManager.highlightOff();
+                    }
                 }
             } else {
                 this.trackManager.highlightOff();
@@ -228,5 +239,4 @@ export class TypedMolArt {
         }
     }
 }
-
 (window as any).TypedMolArt = new TypedMolArt();
