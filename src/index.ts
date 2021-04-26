@@ -52,7 +52,8 @@ export class TypedMolArt {
                 if (entry.contentBoxSize[0]) {
                     if (this.previousWindowWidth && this.previousWindowWidth <= this.minWindowWidth) {
                         d3.select(this.target)
-                            .style('top', entry.contentBoxSize[0].blockSize + 'px');
+                            .style('top', entry.contentBoxSize[0].blockSize + 'px')
+                            .style('position', 'absolute');
                     }
                 }
             }
@@ -149,14 +150,16 @@ export class TypedMolArt {
             d3.select(this.target)
                 .style('left', '0')
                 .style('top', this.protvistaWrapper.offsetHeight + 'px')
-                .style('width', '100%');
+                .style('width', '100%')
+                .style('position', 'absolute');
             d3.select(this.protvistaWrapper).style('width', '100%');
         }
-        else if (windowWidth > this.minWindowWidth && this.previousWindowWidth && this.previousWindowWidth <= this.minWindowWidth) {
+        else if (windowWidth > this.minWindowWidth && (!this.previousWindowWidth || this.previousWindowWidth <= this.minWindowWidth)) {
             d3.select(this.target)
                 .style('left', '50%')
                 .style('top', '0')
-                .style('width', 'calc(50% - 2px)');
+                .style('width', 'calc(50% - 2px)')
+                .style('position', 'fixed');
             d3.select(this.protvistaWrapper).style('width', 'calc(50% - 2px)');
         }
         this.previousWindowWidth = windowWidth;
