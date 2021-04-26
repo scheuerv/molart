@@ -21,7 +21,7 @@ import { PluginStateObject } from "molstar/lib/mol-plugin-state/objects";
 import { TrackFragment } from "uniprot-nightingale/src/manager/track-manager";
 import { mixFragmentColors } from "./fragment-color-mixer";
 import d3 = require('d3');
-import {Mapping} from "uniprot-nightingale/src/parsers/track-parser"
+import { Mapping } from "uniprot-nightingale/src/parsers/track-parser"
 
 
 require('Molstar/mol-plugin-ui/skin/light.scss');
@@ -115,12 +115,17 @@ export class TypedMolArt {
         this.trackManager.onResidueMouseOver.on(async resNum => {
             const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
             if (!data) return;
-            const sel = this.selectFragment(resNum, resNum, data);
-            const loci = StructureSelection.toLociWithSourceUnits(sel);
-            this.plugin.managers.interactivity.lociHighlights.highlightOnly({ loci });
-
+            const position = resNum - this.structureMapping.uniprotStart + this.structureMapping.pdbStart;
+            if (position >= this.structureMapping.pdbStart && position <= this.structureMapping.pdbEnd) {
+                const sel = this.selectFragment(position, position, data);
+                const loci = StructureSelection.toLociWithSourceUnits(sel);
+                this.plugin.managers.interactivity.lociHighlights.highlightOnly({ loci });
+            }
+            else {
+                this.plugin.managers.interactivity.lociHighlights.clearHighlights();
+            }
         });
-        this.trackManager.onFragmentMouseOut.on(resNum => {
+        this.trackManager.onFragmentMouseOut.on(() => {
             this.plugin.managers.interactivity.lociHighlights.clearHighlights();
         });
         this.plugin.canvas3d?.interaction.hover.subscribe((e: HoverEvent) => {
