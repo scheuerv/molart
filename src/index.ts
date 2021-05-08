@@ -3,7 +3,6 @@ import { createPlugin } from 'Molstar/mol-plugin-ui';
 import { DefaultPluginUISpec } from 'Molstar/mol-plugin-ui/spec';
 import { PluginContext } from 'Molstar/mol-plugin/context';
 import { TrackManager } from "uniprot-nightingale/src/index";
-import PDBParser from "uniprot-nightingale/src/parsers/pdb-parser";
 import "./index.html";
 import { BuiltInTrajectoryFormat } from "Molstar/mol-plugin-state/formats/trajectory";
 import { Asset } from "Molstar/mol-util/assets";
@@ -11,7 +10,6 @@ import { Structure, StructureElement, StructureProperties as Props, StructureSel
 import { Loci } from "Molstar/mol-model/structure/structure/element/loci";
 (globalThis as any).d3 = require("d3")
 import HoverEvent = Canvas3D.HoverEvent;
-import SMRParser from "uniprot-nightingale/src/parsers/SMR-parser";
 import { Script } from "molstar/lib/mol-script/script";
 import { Color } from "molstar/lib/mol-util/color/color";
 import { StateTransforms } from "molstar/lib/mol-plugin-state/transforms";
@@ -70,43 +68,12 @@ export class TypedMolArt {
         });
 
         this.trackManager = TrackManager.createDefault();
-        Promise.all([
-            new Promise<LoadParams>((resolve) => {
-                this.trackManager.getParsersByType(PDBParser)[0].onDataLoaded.once(pdbOutputs => {
-                    this.structureMapping = pdbOutputs[0].mapping;
-                    resolve({
-                        url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdbOutputs[0].pdbId}_updated.cif`
-                    });
-                });
-            }),
-            new Promise<LoadParams>((resolve) => {
-                this.trackManager.getParsersByType(SMRParser)[0].onDataLoaded.once(smrOutputs => {
-                    this.structureMapping = smrOutputs[0].mapping;
-                    resolve({
-                        url: smrOutputs[0].coordinatesFile,
-                        format: 'pdb'
-                    });
-                });
-            })
-        ]).then(results => {
-            for (const result of results) {
-                if (result) {
-                    this.load(result);
-                    break;
-                }
-            }
-        });
-        this.trackManager.getParsersByType(PDBParser)[0].onLabelClick.on(pdbOutput => {
-            this.structureMapping = pdbOutput.mapping;
+        this.trackManager.onSelectedStructure.on(output => {
+
+            this.structureMapping = output.mapping;
             this.load({
-                url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdbOutput.pdbId}_updated.cif`
-            });
-        });
-        this.trackManager.getParsersByType(SMRParser)[0].onLabelClick.on(smrOutput => {
-            this.structureMapping = smrOutput.mapping;
-            this.load({
-                url: smrOutput.coordinatesFile,
-                format: 'pdb'
+                url: output.url,
+                format: output.format
             });
         });
         this.trackManager.onHighlightChange.on(fragments => {
@@ -136,14 +103,14 @@ export class TypedMolArt {
                     var authSeqId = Props.residue.auth_seq_id(location);
                     const position = authSeqId - this.structureMapping.pdbStart + this.structureMapping.uniprotStart;
                     if (position >= this.structureMapping.uniprotStart && position <= this.structureMapping.uniprotEnd) {
-                        this.trackManager.highlight(position, position);
+                        this.trackManager.setHighlights([{ start: position, end: position }]);
                     }
                     else {
-                        this.trackManager.highlightOff();
+                        this.trackManager.clearHighlights();
                     }
                 }
             } else {
-                this.trackManager.highlightOff();
+                this.trackManager.clearHighlights();
             }
         });
         this.trackManager.onRendered.on(this.windowResize.bind(this));
