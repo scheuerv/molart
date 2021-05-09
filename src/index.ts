@@ -1,4 +1,4 @@
-import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
+
 import { createPlugin } from 'Molstar/mol-plugin-ui';
 import { DefaultPluginUISpec } from 'Molstar/mol-plugin-ui/spec';
 import { PluginContext } from 'Molstar/mol-plugin/context';
@@ -6,10 +6,8 @@ import { TrackManager } from "uniprot-nightingale/src/index";
 import "./index.html";
 import { BuiltInTrajectoryFormat } from "Molstar/mol-plugin-state/formats/trajectory";
 import { Asset } from "Molstar/mol-util/assets";
-import { Structure, StructureElement, StructureProperties as Props, StructureSelection } from "Molstar/mol-model/structure";
-import { Loci } from "Molstar/mol-model/structure/structure/element/loci";
+import { Structure, StructureElement, StructureSelection } from "Molstar/mol-model/structure";
 (globalThis as any).d3 = require("d3")
-import HoverEvent = Canvas3D.HoverEvent;
 import { Script } from "molstar/lib/mol-script/script";
 import { Color } from "molstar/lib/mol-util/color/color";
 import { StateTransforms } from "molstar/lib/mol-plugin-state/transforms";
@@ -20,8 +18,10 @@ import { TrackFragment } from "uniprot-nightingale/src/manager/track-manager";
 import { mixFragmentColors } from "./fragment-color-mixer";
 import d3 = require('d3');
 import { Mapping } from "uniprot-nightingale/src/parsers/track-parser"
-
-
+import HighlightFinderMolstarEvent from './highlight-finder-molstar-event';
+import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
+import HoverEvent = Canvas3D.HoverEvent;
+import HighlightFinderNightingaleEvent from './highlight-finder-nightingale-event';
 require('Molstar/mol-plugin-ui/skin/light.scss');
 require('./main.scss');
 
@@ -37,6 +37,8 @@ export class TypedMolArt {
     private previousWindowWidth: number | undefined = undefined;
     private readonly minWindowWidth = 1500;
     private structureMapping: Mapping;
+    private readonly highlightFinderMolstarEvent: HighlightFinderMolstarEvent = new HighlightFinderMolstarEvent();
+    private readonly highlightFinderNightingaleEvent: HighlightFinderNightingaleEvent = new HighlightFinderNightingaleEvent();
 
     init(target: string | HTMLElement, targetProtvista: string) {
         this.target = typeof target === 'string' ? document.getElementById(target)! : target;
@@ -69,7 +71,6 @@ export class TypedMolArt {
 
         this.trackManager = TrackManager.createDefault();
         this.trackManager.onSelectedStructure.on(output => {
-
             this.structureMapping = output.mapping;
             this.load({
                 url: output.url,
@@ -81,37 +82,25 @@ export class TypedMolArt {
         });
         this.trackManager.onResidueMouseOver.on(async resNum => {
             const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
-            if (!data) return;
-            const position = resNum - this.structureMapping.uniprotStart + this.structureMapping.pdbStart;
-            if (position >= this.structureMapping.pdbStart && position <= this.structureMapping.pdbEnd) {
-                const sel = this.selectFragment(position, position, data);
-                const loci = StructureSelection.toLociWithSourceUnits(sel);
-                this.plugin.managers.interactivity.lociHighlights.highlightOnly({ loci });
-            }
-            else {
-                this.plugin.managers.interactivity.lociHighlights.clearHighlights();
+            if (data) {
+                const position = this.highlightFinderNightingaleEvent.calculate(resNum, this.structureMapping);
+                if (position) {
+                    const sel = this.selectFragment(position, position, data);
+                    const loci = StructureSelection.toLociWithSourceUnits(sel);
+                    if (loci) {
+                        this.plugin.managers.interactivity.lociHighlights.highlightOnly({ loci });
+                    }
+                    else {
+                        this.plugin.managers.interactivity.lociHighlights.clearHighlights();
+                    }
+                }
             }
         });
         this.trackManager.onFragmentMouseOut.on(() => {
             this.plugin.managers.interactivity.lociHighlights.clearHighlights();
         });
         this.plugin.canvas3d?.interaction.hover.subscribe((e: HoverEvent) => {
-            if (e.current?.loci.kind == 'element-loci') {
-                let structureElement = StructureElement.Stats.ofLoci(e.current.loci as Loci);
-                let location = structureElement.firstResidueLoc;
-                if (location.unit) {
-                    var authSeqId = Props.residue.auth_seq_id(location);
-                    const position = authSeqId - this.structureMapping.pdbStart + this.structureMapping.uniprotStart;
-                    if (position >= this.structureMapping.uniprotStart && position <= this.structureMapping.uniprotEnd) {
-                        this.trackManager.setHighlights([{ start: position, end: position }]);
-                    }
-                    else {
-                        this.trackManager.clearHighlights();
-                    }
-                }
-            } else {
-                this.trackManager.clearHighlights();
-            }
+            this.trackManager.setHighlights(this.highlightFinderMolstarEvent.calculate(e, this.structureMapping));
         });
         this.trackManager.onRendered.on(this.windowResize.bind(this));
         window.addEventListener('resize', this.windowResize.bind(this));
