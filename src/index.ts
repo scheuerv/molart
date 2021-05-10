@@ -3,17 +3,16 @@ import { createPlugin } from 'Molstar/mol-plugin-ui';
 import { DefaultPluginUISpec } from 'Molstar/mol-plugin-ui/spec';
 import { PluginContext } from 'Molstar/mol-plugin/context';
 import { TrackManager } from "uniprot-nightingale/src/index";
+import { MolScriptBuilder as MS } from 'Molstar/mol-script/language/builder';
 import "./index.html";
 import { BuiltInTrajectoryFormat } from "Molstar/mol-plugin-state/formats/trajectory";
 import { Asset } from "Molstar/mol-util/assets";
 import { Structure, StructureElement, StructureSelection } from "Molstar/mol-model/structure";
 (globalThis as any).d3 = require("d3")
-import { Script } from "molstar/lib/mol-script/script";
-import { Color } from "molstar/lib/mol-util/color/color";
-import { StateTransforms } from "molstar/lib/mol-plugin-state/transforms";
-import { Bundle } from "molstar/lib/mol-model/structure/structure/element/bundle";
-import { StateObjectSelector } from "molstar/lib/mol-state";
-import { PluginStateObject } from "molstar/lib/mol-plugin-state/objects";
+import { Script } from "Molstar/mol-script/script";
+import { Color } from "Molstar/mol-util/color";
+import { Bundle } from "Molstar/mol-model/structure/structure/element/bundle";
+import { PluginStateObject } from "Molstar/mol-plugin-state/objects";
 import { TrackFragment } from "uniprot-nightingale/src/manager/track-manager";
 import { mixFragmentColors } from "./fragment-color-mixer";
 import d3 = require('d3');
@@ -22,6 +21,10 @@ import HighlightFinderMolstarEvent from './highlight-finder-molstar-event';
 import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
 import HoverEvent = Canvas3D.HoverEvent;
 import HighlightFinderNightingaleEvent from './highlight-finder-nightingale-event';
+import { StateTransforms } from 'Molstar/mol-plugin-state/transforms';
+import { StateObjectSelector, StateObject, StateTransformer } from 'Molstar/mol-state';
+import { StructureRepresentationBuiltInProps } from 'Molstar/mol-plugin-state/helpers/structure-representation-params';
+import { Expression } from 'Molstar/mol-script/language/expression';
 require('Molstar/mol-plugin-ui/skin/light.scss');
 require('./main.scss');
 
@@ -39,8 +42,10 @@ export class TypedMolArt {
     private structureMapping: Mapping;
     private readonly highlightFinderMolstarEvent: HighlightFinderMolstarEvent = new HighlightFinderMolstarEvent();
     private readonly highlightFinderNightingaleEvent: HighlightFinderNightingaleEvent = new HighlightFinderNightingaleEvent();
+    private structure: StateObjectSelector<PluginStateObject.Molecule.Structure, StateTransformer<StateObject<any, StateObject.Type<any>>, StateObject<any, StateObject.Type<any>>, any>> | undefined;
 
-    init(target: string | HTMLElement, targetProtvista: string) {
+    init(target: string | HTMLElement, targetProtvista: string, config: Config = DefaultConfig) {
+
         this.target = typeof target === 'string' ? document.getElementById(target)! : target;
         const wrapper = document.getElementById(targetProtvista);
         if (!wrapper) {
@@ -75,8 +80,9 @@ export class TypedMolArt {
             this.load({
                 url: output.url,
                 format: output.format
-            });
+            }, config);
         });
+
         this.trackManager.onHighlightChange.on(fragments => {
             this.overpaintFragments(fragments);
         });
@@ -175,7 +181,7 @@ export class TypedMolArt {
         update.commit();
     }
 
-    async load({ url, format = 'mmcif', isBinary = false, assemblyId = '' }: LoadParams) {
+    async load({ url, format = 'mmcif', isBinary = false, assemblyId = '' }: LoadParams, config: Config) {
         this.molecularSurfaceRepr = undefined;
         this.cartoonRepr = undefined;
         await this.plugin.clear();
@@ -185,9 +191,28 @@ export class TypedMolArt {
         }, { state: { isGhost: true } });
         const trajectory = await this.plugin.builders.structure.parseTrajectory(data, format);
         const model = await this.plugin.builders.structure.createModel(trajectory);
-        const structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
-        const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(structure, 'polymer');
-        const water = await this.plugin.builders.structure.tryCreateComponentStatic(structure, 'water');
+        this.structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
+
+        for (const key in config.structure.extrahighlights) {
+            const extraHighlight = config.structure.extrahighlights[key];
+            MS.struct.atomProperty.macromolecular.auth_atom_id
+            const filter: Record<string, Expression> = {};
+            if (extraHighlight.residue) {
+                filter['residue-test'] = MS.core.rel.inRange([MS.struct.atomProperty.macromolecular.auth_seq_id(), extraHighlight.residue.authResidueNumFrom, extraHighlight.residue.authResidueNumTo]);
+            }
+            if (extraHighlight.authChain) {
+                filter['chain-test'] = MS.core.set.has([MS.core.type.set(extraHighlight.authChain), MS.ammp('auth_asym_id')]);
+            }
+            if (extraHighlight.authAtom) {
+                filter['atom-test'] = MS.core.set.has([MS.core.type.set(extraHighlight.authAtom), MS.ammp('auth_atom_id')]);
+            }
+            const expression = MS.struct.generator.atomGroups(filter);
+            const highlightComponent = await this.plugin.builders.structure.tryCreateComponentFromExpression(this.structure, expression, `extra-highlight-${key}`);
+            await this.plugin.builders.structure.representation.addRepresentation(highlightComponent!, extraHighlight.props);
+        }
+
+        const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(this.structure, 'polymer');
+        const water = await this.plugin.builders.structure.tryCreateComponentStatic(this.structure, 'water');
         if (polymer) {
             this.cartoonRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, {
                 type: 'cartoon', color: 'chain-id',
@@ -204,3 +229,23 @@ export class TypedMolArt {
     }
 }
 (window as any).TypedMolArt = new TypedMolArt();
+
+export type Config = {
+    structure: {
+        extrahighlights: {
+            props: StructureRepresentationBuiltInProps,
+            residue?: {
+                authResidueNumFrom: number,
+                authResidueNumTo: number
+            }
+            authChain?: string[],
+            authAtom?: string[],
+        }[]
+    }
+}
+
+const DefaultConfig: Config = {
+    structure: {
+        extrahighlights: []
+    }
+}
