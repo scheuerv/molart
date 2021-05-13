@@ -25,16 +25,15 @@ export default class HighlightFinderMolstarEvent {
     }
     private getPosition(location: any, structureMapping: Mapping) {
         const authSeqId = StructureProperties.residue.auth_seq_id(location);
-        const labelSeqId = StructureProperties.residue.label_seq_id(location);
-        const useMapping = authSeqId == labelSeqId;
         let position: number | undefined;
-        if (!useMapping) {
-            position = authSeqId
-        }
-        else {
-            const fragmentMapping = this.getFragmentMapping(authSeqId, structureMapping);
-            if (fragmentMapping) {
-                position = authSeqId - fragmentMapping.pdbStart + structureMapping.uniprotStart;
+        const fragmentMapping = this.getFragmentMapping(authSeqId, structureMapping);
+        if (fragmentMapping) {
+            const useMapping = structureMapping.uniprotStart == fragmentMapping.pdbStart;
+            if (useMapping) {
+                position = authSeqId
+            }
+            else {
+                position = authSeqId - fragmentMapping.pdbStart + fragmentMapping.from;
             }
         }
         return position;
