@@ -16,6 +16,7 @@
         "d3": "^5.16.0",
         "http-server": "^0.12.3",
         "molstar": "^2.0.4",
+        "ts-typed-events": "^3.0.0",
         "uniprot-nightingale": "git://github.com/scheuerv/uniprot-nightingale.git"
     },
     "devDependencies": {

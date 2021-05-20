@@ -7,13 +7,13 @@ import { MolScriptBuilder as MS } from 'Molstar/mol-script/language/builder';
 import "./index.html";
 import { BuiltInTrajectoryFormat } from "Molstar/mol-plugin-state/formats/trajectory";
 import { Asset } from "Molstar/mol-util/assets";
-import { Structure, StructureElement, StructureSelection } from "Molstar/mol-model/structure";
+import { ChainIndex, EntityIndex, ResidueIndex, Structure, StructureElement, StructureSelection } from "Molstar/mol-model/structure";
 (globalThis as any).d3 = require("d3")
 import { Script } from "Molstar/mol-script/script";
 import { Color } from "Molstar/mol-util/color";
 import { Bundle } from "Molstar/mol-model/structure/structure/element/bundle";
 import { PluginStateObject } from "Molstar/mol-plugin-state/objects";
-import { TrackFragment } from "uniprot-nightingale/src/manager/track-manager";
+import { TrackFragment, Config as SequenceConfig, Highlight } from "uniprot-nightingale/src/manager/track-manager";
 import { mixFragmentColors } from "./fragment-color-mixer";
 import d3 = require('d3');
 import { Mapping } from "uniprot-nightingale/src/parsers/track-parser"
@@ -25,6 +25,10 @@ import { StateTransforms } from 'Molstar/mol-plugin-state/transforms';
 import { StateObjectSelector, StateObject, StateTransformer } from 'Molstar/mol-state';
 import { StructureRepresentationBuiltInProps } from 'Molstar/mol-plugin-state/helpers/structure-representation-params';
 import { Expression } from 'Molstar/mol-script/language/expression';
+import { Loci } from 'molstar/lib/mol-model/loci';
+import { createEmitter } from "ts-typed-events";
+import { StructureProperties } from "Molstar/mol-model/structure";
+import { getStructureElementLoci } from './molstar-utils';
 require('Molstar/mol-plugin-ui/skin/light.scss');
 require('./main.scss');
 
@@ -43,6 +47,20 @@ export class TypedMolArt {
     private readonly highlightFinderMolstarEvent: HighlightFinderMolstarEvent = new HighlightFinderMolstarEvent();
     private readonly highlightFinderNightingaleEvent: HighlightFinderNightingaleEvent = new HighlightFinderNightingaleEvent();
     private structure: StateObjectSelector<PluginStateObject.Molecule.Structure, StateTransformer<StateObject<any, StateObject.Type<any>>, StateObject<any, StateObject.Type<any>>, any>> | undefined;
+    private highlightedResidueInStructure?: Loci;
+    private mouseOverHighlightedResidueInStructure?: StructureElement.Loci;
+    private highligtedInSequence?: Highlight;
+    private mouseOverHighlightedResidueInSequence?: number;
+    private readonly emitSequenceMouseOn = createEmitter<Number>();
+    public readonly sequenceMouseOn = this.emitSequenceMouseOn.event;
+    private readonly emitSequenceMouseOff = createEmitter<void>();
+    public readonly sequenceMouseOff = this.emitSequenceMouseOff.event;
+    private readonly emitStructureMouseOff = createEmitter<void>();
+    public readonly structureMouseOff = this.emitStructureMouseOff.event;
+    private readonly emitStructureMouseOn = createEmitter<Residue>();
+    public readonly structureMouseOn = this.emitStructureMouseOn.event;
+    private readonly emitStructureLoaded = createEmitter<void>();
+    public readonly structureLoaded = this.emitStructureLoaded.event;
 
     init(target: string | HTMLElement, targetProtvista: string, config: Config = DefaultConfig) {
 
@@ -74,7 +92,7 @@ export class TypedMolArt {
             },
         });
 
-        this.trackManager = TrackManager.createDefault();
+        this.trackManager = TrackManager.createDefault(config.sequence);
         this.trackManager.onSelectedStructure.on(output => {
             this.structureMapping = output.mapping;
             this.load({
@@ -87,28 +105,72 @@ export class TypedMolArt {
             this.overpaintFragments(fragments);
         });
         this.trackManager.onResidueMouseOver.on(async resNum => {
-            const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
-            if (data) {
-                const position = this.highlightFinderNightingaleEvent.calculate(resNum, this.structureMapping);
-                if (position) {
-                    const sel = this.selectFragment(position, position, data);
-                    const loci = StructureSelection.toLociWithSourceUnits(sel);
-                    if (loci) {
-                        this.plugin.managers.interactivity.lociHighlights.highlightOnly({ loci });
-                    }
-                    else {
-                        this.plugin.managers.interactivity.lociHighlights.clearHighlights();
-                    }
-                }
+            this.emitSequenceMouseOn.emit(resNum);
+            console.log('SequenceMouseOn')
+            this.mouseOverHighlightedResidueInStructure = this.findLociFromResidueNumber(resNum);
+            this.mouseOverHighlightedResidueInSequence = resNum;
+            this.highlightStructureResidues();
+        });
+
+        this.trackManager.onFragmentMouseOut.on(() => {
+            this.emitSequenceMouseOff.emit();
+            console.log('SequenceMouseOff')
+            this.mouseOverHighlightedResidueInStructure = undefined;
+            this.mouseOverHighlightedResidueInSequence = undefined;
+            this.plugin.managers.interactivity.lociHighlights.clearHighlights();
+            if (this.highlightedResidueInStructure) {
+                this.plugin.managers.interactivity.lociHighlights.highlight({ loci: this.highlightedResidueInStructure })
             }
         });
-        this.trackManager.onFragmentMouseOut.on(() => {
-            this.plugin.managers.interactivity.lociHighlights.clearHighlights();
-        });
         this.plugin.canvas3d?.interaction.hover.subscribe((e: HoverEvent) => {
-            this.trackManager.setHighlights(this.highlightFinderMolstarEvent.calculate(e, this.structureMapping));
+            const structureElementLoci = getStructureElementLoci(e.current.loci)
+            if (this.mouseOverHighlightedResidueInStructure && !structureElementLoci) {
+                this.emitStructureMouseOff.emit();
+                this.mouseOverHighlightedResidueInStructure = undefined;
+                console.log('StructureMouseOff');
+            } else if (
+                structureElementLoci &&
+                (
+                    !this.mouseOverHighlightedResidueInStructure ||
+                    !StructureElement.Loci.areEqual(this.mouseOverHighlightedResidueInStructure, structureElementLoci)
+                )
+            ) {
+                const structureElement = StructureElement.Stats.ofLoci(structureElementLoci);
+                const location = structureElement.firstElementLoc;
+                const residue: Residue = {
+                    authName: StructureProperties.atom.auth_comp_id(location),
+                    name: StructureProperties.atom.label_comp_id(location),
+                    isHet: StructureProperties.residue.hasMicroheterogeneity(location),
+                    insCode: StructureProperties.residue.pdbx_PDB_ins_code(location),
+                    index: StructureProperties.residue.key(location),
+                    seqNumber: StructureProperties.residue.label_seq_id(location),
+                    authSeqNumber: StructureProperties.residue.auth_seq_id(location),
+                    chain: {
+                        asymId: StructureProperties.chain.label_asym_id(location),
+                        authAsymId: StructureProperties.chain.auth_asym_id(location),
+                        entity: {
+                            entityId: StructureProperties.entity.id(location),
+                            index: StructureProperties.entity.key(location)
+                        },
+                        index: StructureProperties.chain.key(location)
+                    }
+                }
+                this.emitStructureMouseOn.emit(residue);
+                this.mouseOverHighlightedResidueInStructure = structureElementLoci;
+                console.log('StructureMouseOn');
+            }
+
+            const highlights = this.highlightFinderMolstarEvent.calculate(e, this.structureMapping)
+            this.mouseOverHighlightedResidueInSequence = (highlights && highlights.length > 0) ? highlights[0].start : undefined;
+            if (this.highligtedInSequence) {
+                highlights.push(this.highligtedInSequence)
+            }
+            this.trackManager.setHighlights(highlights);
+            if (this.highlightedResidueInStructure) {
+                this.plugin.managers.interactivity.lociHighlights.highlight({ loci: this.highlightedResidueInStructure })
+            }
         });
-        this.trackManager.onRendered.on(this.windowResize.bind(this));
+        this.trackManager.onRendered.on(this.windowResize.bind(this));// tady emitSequenceViewerReady?
         window.addEventListener('resize', this.windowResize.bind(this));
     }
     private windowResize() {
@@ -133,27 +195,28 @@ export class TypedMolArt {
         this.plugin.handleResize();
     }
 
-    loadUniprot(uniprotId: string) {
+    public loadUniprot(uniprotId: string) {
         this.trackManager.render(uniprotId, this.protvistaWrapper);
     }
 
-    private selectFragment(from: number, to: number, data: Structure) {
-        const sel = Script.getStructureSelection(
-            (Q) =>
-                Q.struct.generator.atomGroups({
-                    "residue-test": Q.core.logic.or(
-                        [
-                            Q.core.rel.inRange([
-                                Q.struct.atomProperty.macromolecular.auth_seq_id(),
-                                from,
-                                to,
-                            ])
-                        ]
-                    ),
-                }),
+    private selectFragment(from: number, to: number, data: Structure, chain?: string) {
+        const filter: Record<string, Expression> = {
+            "residue-test": MS.core.rel.inRange([
+                MS.struct.atomProperty.macromolecular.auth_seq_id(),
+                from,
+                to,
+            ])
+        };
+        if (chain) {
+            filter["chain-test"] = MS.core.rel.eq([
+                MS.struct.atomProperty.macromolecular.auth_asym_id(),
+                chain
+            ]);
+        }
+        return Script.getStructureSelection(
+            MS.struct.generator.atomGroups(filter),
             data
         );
-        return sel;
     }
 
     private overpaintFragments(fragments: TrackFragment[]) {
@@ -181,7 +244,7 @@ export class TypedMolArt {
         update.commit();
     }
 
-    async load({ url, format = 'mmcif', isBinary = false, assemblyId = '' }: LoadParams, config: Config) {
+    private async load({ url, format = 'mmcif', isBinary = false, assemblyId = '' }: LoadParams, config: Config) {
         this.molecularSurfaceRepr = undefined;
         this.cartoonRepr = undefined;
         await this.plugin.clear();
@@ -220,11 +283,76 @@ export class TypedMolArt {
             this.molecularSurfaceRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, {
                 type: 'molecular-surface', typeParams: { alpha: 0.25 }, color: 'uniform'
             });
+            this.emitStructureLoaded.emit();
+            console.log('StructureLoaded')
         }
         if (water) {
             await this.plugin.builders.structure.representation.addRepresentation(water, {
                 type: 'ball-and-stick', color: 'element-symbol',
             });
+        }
+    }
+    public isStructureLoaded(): boolean {
+        return !!this.cartoonRepr;
+    }
+    public highlightInStructure(resNum: number) {
+        this.highlightedResidueInStructure = this.findLociFromResidueNumber(resNum);
+        this.highlightStructureResidues();
+    }
+    public unhighlightInStructure() {
+        this.highlightedResidueInStructure = undefined;
+        this.plugin.managers.interactivity.lociHighlights.clearHighlights();
+        if (this.mouseOverHighlightedResidueInStructure) {
+            this.plugin.managers.interactivity.lociHighlights.highlightOnly({ loci: this.mouseOverHighlightedResidueInStructure });
+        }
+    }
+    public unhighlightInSequence() {
+        this.highligtedInSequence = undefined;
+        this.trackManager.clearHighlights();
+        if (this.mouseOverHighlightedResidueInSequence) {
+            this.trackManager.setHighlights([{ start: this.mouseOverHighlightedResidueInSequence, end: this.mouseOverHighlightedResidueInSequence }]);
+        }
+    }
+
+    public highlightInSequence(higlight: Highlight) {
+        this.highligtedInSequence = higlight;
+        this.trackManager.setHighlights(this.mouseOverHighlightedResidueInSequence ? [higlight, { start: this.mouseOverHighlightedResidueInSequence, end: this.mouseOverHighlightedResidueInSequence }] : [higlight]);
+    }
+    public focusInStructure(resNum: number, radius: number = 0, chain?: string) {
+        const loci = this.findLociFromResidueNumber(resNum, chain)
+        if (loci) {
+            this.plugin.managers.structure.focus.setFromLoci(loci);
+            this.plugin.managers.camera.focusLoci(loci, { extraRadius: radius });
+        }
+    }
+    public getStructureController() {
+        return this.plugin;
+    }
+    public getSequenceController() {
+        return this.trackManager;
+    }
+    public getSequenceStructureRange() {
+        return this.structureMapping.fragmentMappings.map(fragmentMapping => {
+            return [fragmentMapping.from, fragmentMapping.to]
+        })
+    }
+    private highlightStructureResidues() {
+        this.plugin.managers.interactivity.lociHighlights.clearHighlights();
+        if (this.highlightedResidueInStructure) {
+            this.plugin.managers.interactivity.lociHighlights.highlight({ loci: this.highlightedResidueInStructure });
+        }
+        if (this.mouseOverHighlightedResidueInStructure) {
+            this.plugin.managers.interactivity.lociHighlights.highlight({ loci: this.mouseOverHighlightedResidueInStructure });
+        }
+    }
+    private findLociFromResidueNumber(resNum: number, chain?: string): StructureElement.Loci | undefined {
+        const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
+        if (data) {
+            const position = this.highlightFinderNightingaleEvent.calculate(resNum, this.structureMapping);
+            if (position) {
+                const sel = this.selectFragment(position, position, data, chain);
+                return StructureSelection.toLociWithSourceUnits(sel);
+            }
         }
     }
 }
@@ -241,7 +369,27 @@ export type Config = {
             authChain?: string[],
             authAtom?: string[],
         }[]
+    },
+    sequence?: SequenceConfig
+}
+
+type Residue = {
+    authName: string,
+    authSeqNumber: number,
+    chain: {
+        asymId: string,
+        authAsymId: string,
+        entity: {
+            entityId: string,
+            index: EntityIndex,
+        },
+        index: ChainIndex,
     }
+    index: ResidueIndex,
+    insCode: string,
+    isHet: boolean,
+    name: string,
+    seqNumber: number
 }
 
 const DefaultConfig: Config = {

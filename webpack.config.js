@@ -14,8 +14,7 @@ const sharedConfig = {
         test: /\.(ts|tsx)$/,        
         include: [
           path.resolve(__dirname, 'src'),
-          path.resolve(__dirname, 'node_modules/uniprot-nightingale/src'),
-          path.resolve(__dirname, 'node_modules/protvista-variation-adapter/src/variants.ts')
+          path.resolve(__dirname, 'node_modules/uniprot-nightingale/src')
           ],
         options: {
           allowTsInNodeModules: true,
