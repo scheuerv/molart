@@ -106,7 +106,6 @@ export class TypedMolArt {
         });
         this.trackManager.onResidueMouseOver.on(async resNum => {
             this.emitSequenceMouseOn.emit(resNum);
-            console.log('SequenceMouseOn')
             this.mouseOverHighlightedResidueInStructure = this.findLociFromResidueNumber(resNum);
             this.mouseOverHighlightedResidueInSequence = resNum;
             this.highlightStructureResidues();
@@ -114,7 +113,6 @@ export class TypedMolArt {
 
         this.trackManager.onFragmentMouseOut.on(() => {
             this.emitSequenceMouseOff.emit();
-            console.log('SequenceMouseOff')
             this.mouseOverHighlightedResidueInStructure = undefined;
             this.mouseOverHighlightedResidueInSequence = undefined;
             this.plugin.managers.interactivity.lociHighlights.clearHighlights();
@@ -127,7 +125,6 @@ export class TypedMolArt {
             if (this.mouseOverHighlightedResidueInStructure && !structureElementLoci) {
                 this.emitStructureMouseOff.emit();
                 this.mouseOverHighlightedResidueInStructure = undefined;
-                console.log('StructureMouseOff');
             } else if (
                 structureElementLoci &&
                 (
@@ -157,7 +154,6 @@ export class TypedMolArt {
                 }
                 this.emitStructureMouseOn.emit(residue);
                 this.mouseOverHighlightedResidueInStructure = structureElementLoci;
-                console.log('StructureMouseOn');
             }
 
             const highlights = this.highlightFinderMolstarEvent.calculate(e, this.structureMapping)
@@ -170,7 +166,7 @@ export class TypedMolArt {
                 this.plugin.managers.interactivity.lociHighlights.highlight({ loci: this.highlightedResidueInStructure })
             }
         });
-        this.trackManager.onRendered.on(this.windowResize.bind(this));// tady emitSequenceViewerReady?
+        this.trackManager.onRendered.on(this.windowResize.bind(this));
         window.addEventListener('resize', this.windowResize.bind(this));
     }
     private windowResize() {
