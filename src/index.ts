@@ -337,6 +337,7 @@ export class TypedMolArt {
                 type: 'molecular-surface', typeParams: { alpha: 1 }, color: 'uniform'
             });
             this.setTransparency(this.slider?.value);
+            this.overpaintFragments(this.trackManager.getMarkedFragments());
             this.emitStructureLoaded.emit();
             console.log('StructureLoaded')
         }
