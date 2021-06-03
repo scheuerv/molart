@@ -61,6 +61,12 @@ export class TypedMolArt {
     public readonly structureMouseOn = this.emitStructureMouseOn.event;
     private readonly emitStructureLoaded = createEmitter<void>();
     public readonly structureLoaded = this.emitStructureLoaded.event;
+    private readonly slider: HTMLInputElement = d3.create('div').attr('class', 'transparency-slider')
+        .append('input')
+        .attr('type', 'range')
+        .attr('min', 1)
+        .attr('max', 100)
+        .attr('value', 50).node()!;
 
     init(target: string | HTMLElement, targetProtvista: string, config: Config = DefaultConfig) {
 
@@ -91,7 +97,10 @@ export class TypedMolArt {
                 }
             },
         });
-
+        this.target.append(this.slider.parentNode!);
+        this.slider.addEventListener('change', () => {
+            this.setTransparency(this.slider!.value);
+        })
         this.trackManager = TrackManager.createDefault(config.sequence);
         this.trackManager.onSelectedStructure.on(output => {
             this.structureMapping = output.mapping;
@@ -241,6 +250,31 @@ export class TypedMolArt {
         update.commit();
     }
 
+    private setTransparency(value?: string) {
+        if (!this.molecularSurfaceRepr || !this.molecularSurfaceRepr.obj || value === undefined) return;
+        const parsedValue = parseFloat(value) / 100;
+        const update = this.plugin.build();
+
+        const structure = this.molecularSurfaceRepr.obj.data.sourceData;
+
+        const loci = StructureLoci.all(structure.root);
+        if (StructureLoci.isEmpty(loci)) {
+            return;
+        }
+
+        const layer = {
+            bundle: StructureElement.Bundle.fromLoci(loci),
+            value: 1 - parsedValue,
+        };
+
+        update.to(this.molecularSurfaceRepr).apply(StateTransforms.Representation.TransparencyStructureRepresentation3DFromBundle, {
+            layers: [layer]
+        })
+
+        update.commit();
+        d3.select(this.slider).attr('title', `Surface transparency:  ${parsedValue * 100}%`);
+    }
+
     private async load({ url, format = 'mmcif', isBinary = false, assemblyId = '', data }: LoadParams, config: Config) {
         this.molecularSurfaceRepr = undefined;
         this.cartoonRepr = undefined;
@@ -291,8 +325,9 @@ export class TypedMolArt {
                 type: 'cartoon', color: 'chain-id',
             });
             this.molecularSurfaceRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, {
-                type: 'molecular-surface', typeParams: { alpha: 0.25 }, color: 'uniform'
+                type: 'molecular-surface', typeParams: { alpha: 1 }, color: 'uniform'
             });
+            this.setTransparency(this.slider?.value);
             this.emitStructureLoaded.emit();
             console.log('StructureLoaded')
         }
