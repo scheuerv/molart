@@ -326,8 +326,9 @@ export class TypedMolArt {
             const highlightComponent = await this.plugin.builders.structure.tryCreateComponentFromExpression(this.structure, expression, `extra-highlight-${key}`);
             await this.plugin.builders.structure.representation.addRepresentation(highlightComponent!, extraHighlight.props);
         }
-
         const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(this.structure, 'polymer');
+        const ligand = await this.plugin.builders.structure.tryCreateComponentStatic(this.structure, 'ligand');
+        const lipid = await this.plugin.builders.structure.tryCreateComponentStatic(this.structure, 'lipid');
         const water = await this.plugin.builders.structure.tryCreateComponentStatic(this.structure, 'water');
         if (polymer) {
             this.cartoonRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, {
@@ -339,7 +340,16 @@ export class TypedMolArt {
             this.setTransparency(this.slider?.value);
             this.overpaintFragments(this.trackManager.getMarkedFragments());
             this.emitStructureLoaded.emit();
-            console.log('StructureLoaded')
+        }
+        if (ligand) {
+            await this.plugin.builders.structure.representation.addRepresentation(ligand, {
+                type: 'ball-and-stick', color: 'element-symbol',
+            });
+        }
+        if (lipid) {
+            await this.plugin.builders.structure.representation.addRepresentation(lipid, {
+                type: 'ball-and-stick', color: 'element-symbol',
+            });
         }
         if (water) {
             await this.plugin.builders.structure.representation.addRepresentation(water, {
