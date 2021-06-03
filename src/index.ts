@@ -231,14 +231,23 @@ export class TypedMolArt {
         if (!data) return;
         const params: { bundle: StructureElement.Bundle, color: Color, clear: boolean }[] = []
         mixFragmentColors(fragments).forEach(fragment => {
-            const sel = this.selectFragment(fragment.start, fragment.end, data);
-            const loci = StructureSelection.toLociWithSourceUnits(sel);
-            const bundle = Bundle.fromLoci(loci);
-            params.push({
-                bundle: bundle,
-                color: Color(parseInt(fragment.color.slice(1), 16)),
-                clear: false
-            });
+            let startMapped = this.highlightFinderNightingaleEvent.calculate(fragment.start, this.structureMapping);
+            let endMapped = this.highlightFinderNightingaleEvent.calculate(fragment.end, this.structureMapping);
+            if (!startMapped && endMapped) {
+                startMapped = this.highlightFinderNightingaleEvent.getPositionOfFirstResidueInFragment(fragment.end, this.structureMapping);
+            }
+            else if (!endMapped) {
+                endMapped = this.highlightFinderNightingaleEvent.getPositionOfLastResidueInFragment(fragment.start, this.structureMapping);
+            }
+            if (startMapped && endMapped) {
+                const sel = this.selectFragment(startMapped, endMapped, data);
+                const bundle = Bundle.fromSelection(sel);
+                params.push({
+                    bundle: bundle,
+                    color: Color(parseInt(fragment.color.slice(1), 16)),
+                    clear: false
+                });
+            }
         });
         const update = this.plugin.build();
         update.to(this.molecularSurfaceRepr).apply(StateTransforms.Representation.OverpaintStructureRepresentation3DFromBundle, {

@@ -21,4 +21,12 @@ export default class HighlightFinderNightingaleEvent {
             }
         }
     }
+    public getPositionOfLastResidueInFragment(resNum: number, structureMapping: Mapping)
+    {
+        return this.getFragmentMapping(resNum, structureMapping)?.pdbEnd;
+    }
+    public getPositionOfFirstResidueInFragment(resNum: number, structureMapping: Mapping)
+    {
+        return this.getFragmentMapping(resNum, structureMapping)?.pdbStart;
+    }
 }
