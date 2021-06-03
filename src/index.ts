@@ -12,7 +12,6 @@ import { ChainIndex, EntityIndex, ResidueIndex, Structure, StructureElement, Str
 import { Script } from "Molstar/mol-script/script";
 import { Color } from "Molstar/mol-util/color";
 import { Bundle } from "Molstar/mol-model/structure/structure/element/bundle";
-import { PluginStateObject } from "Molstar/mol-plugin-state/objects";
 import { TrackFragment, Config as SequenceConfig, Highlight } from "uniprot-nightingale/src/manager/track-manager";
 import { mixFragmentColors } from "./fragment-color-mixer";
 import d3 = require('d3');
@@ -22,31 +21,32 @@ import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
 import HoverEvent = Canvas3D.HoverEvent;
 import HighlightFinderNightingaleEvent from './highlight-finder-nightingale-event';
 import { StateTransforms } from 'Molstar/mol-plugin-state/transforms';
-import { StateObjectSelector, StateObject, StateTransformer } from 'Molstar/mol-state';
+import { StateObjectSelector } from 'Molstar/mol-state';
 import { StructureRepresentationBuiltInProps } from 'Molstar/mol-plugin-state/helpers/structure-representation-params';
 import { Expression } from 'Molstar/mol-script/language/expression';
 import { Loci } from 'molstar/lib/mol-model/loci';
+import { Loci as StructureLoci } from 'Molstar/mol-model/structure/structure/element/loci';
 import { createEmitter } from "ts-typed-events";
 import { StructureProperties } from "Molstar/mol-model/structure";
 import { getStructureElementLoci } from './molstar-utils';
 require('Molstar/mol-plugin-ui/skin/light.scss');
 require('./main.scss');
 
-type LoadParams = { url: string, format?: BuiltInTrajectoryFormat, isBinary?: boolean, assemblyId?: string }
+type LoadParams = { url?: string, format?: BuiltInTrajectoryFormat, isBinary?: boolean, assemblyId?: string, data?: any }
 
 export class TypedMolArt {
     private plugin: PluginContext;
     private protvistaWrapper: HTMLElement;
     private target: HTMLElement;
     private trackManager: TrackManager;
-    private molecularSurfaceRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D> | undefined;
-    private cartoonRepr: StateObjectSelector<PluginStateObject.Molecule.Structure.Representation3D> | undefined;
+    private molecularSurfaceRepr?: StateObjectSelector;
+    private cartoonRepr?: StateObjectSelector;
     private previousWindowWidth: number | undefined = undefined;
     private readonly minWindowWidth = 1500;
     private structureMapping: Mapping;
     private readonly highlightFinderMolstarEvent: HighlightFinderMolstarEvent = new HighlightFinderMolstarEvent();
     private readonly highlightFinderNightingaleEvent: HighlightFinderNightingaleEvent = new HighlightFinderNightingaleEvent();
-    private structure: StateObjectSelector<PluginStateObject.Molecule.Structure, StateTransformer<StateObject<any, StateObject.Type<any>>, StateObject<any, StateObject.Type<any>>, any>> | undefined;
+    private structure: StateObjectSelector;
     private highlightedResidueInStructure?: Loci;
     private mouseOverHighlightedResidueInStructure?: StructureElement.Loci;
     private highligtedInSequence?: Highlight;
@@ -97,7 +97,8 @@ export class TypedMolArt {
             this.structureMapping = output.mapping;
             this.load({
                 url: output.url,
-                format: output.format
+                format: output.format,
+                data: output.data
             }, config);
         });
 
@@ -240,18 +241,31 @@ export class TypedMolArt {
         update.commit();
     }
 
-    private async load({ url, format = 'mmcif', isBinary = false, assemblyId = '' }: LoadParams, config: Config) {
+    private async load({ url, format = 'mmcif', isBinary = false, assemblyId = '', data }: LoadParams, config: Config) {
         this.molecularSurfaceRepr = undefined;
         this.cartoonRepr = undefined;
         await this.plugin.clear();
-        const data = await this.plugin.builders.data.download({
-            url: Asset.Url(url),
-            isBinary
-        }, { state: { isGhost: true } });
-        const trajectory = await this.plugin.builders.structure.parseTrajectory(data, format);
+        let loadedData: StateObjectSelector;
+        if (url) {
+            loadedData = await this.plugin.builders.data.download({
+                url: Asset.Url(url!),
+                isBinary
+            }, { state: { isGhost: true } });
+        }
+        else if (data) {
+            loadedData = await this.plugin.builders.data.rawData({
+                data: data
+            }, { state: { isGhost: true } });
+        }
+        else {
+            throw new Error("Structure url or data were not provided!")
+        }
         const model = await this.plugin.builders.structure.createModel(trajectory);
         this.structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
 
+        const trajectory = await this.plugin.builders.structure.parseTrajectory(loadedData, format);
+        const model = await this.plugin.builders.structure.createModel(trajectory);
+        this.structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
         for (const key in config.structure.extrahighlights) {
             const extraHighlight = config.structure.extrahighlights[key];
             MS.struct.atomProperty.macromolecular.auth_atom_id
