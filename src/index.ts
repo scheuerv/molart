@@ -415,7 +415,7 @@ export type Config = {
             authAtom?: string[],
         }[]
     },
-    sequence?: SequenceConfig
+    sequence: SequenceConfig
 }
 
 type Residue = {
@@ -440,5 +440,8 @@ type Residue = {
 const DefaultConfig: Config = {
     structure: {
         extrahighlights: []
+    },
+    sequence: {
+
     }
 }
