@@ -38,7 +38,7 @@ export class TypedMolArt {
     private plugin: PluginContext;
     private protvistaWrapper: HTMLElement;
     private target: HTMLElement;
-    private trackManager: TrackManager;
+    private trackManager?: TrackManager;
     private molecularSurfaceRepr?: StateObjectSelector;
     private cartoonRepr?: StateObjectSelector;
     private previousWindowWidth: number | undefined = undefined;
@@ -101,35 +101,7 @@ export class TypedMolArt {
         this.slider.addEventListener('change', () => {
             this.setTransparency(this.slider!.value);
         })
-        this.trackManager = TrackManager.createDefault(config.sequence);
-        this.trackManager.onSelectedStructure.on(output => {
-            this.structureMapping = output.mapping;
-            this.load({
-                url: output.url,
-                format: output.format,
-                data: output.data
-            }, config);
-        });
-
-        this.trackManager.onHighlightChange.on(fragments => {
-            this.overpaintFragments(fragments);
-        });
-        this.trackManager.onResidueMouseOver.on(async resNum => {
-            this.emitSequenceMouseOn.emit(resNum);
-            this.mouseOverHighlightedResidueInStructure = this.findLociFromResidueNumber(resNum);
-            this.mouseOverHighlightedResidueInSequence = resNum;
-            this.highlightStructureResidues();
-        });
-
-        this.trackManager.onFragmentMouseOut.on(() => {
-            this.emitSequenceMouseOff.emit();
-            this.mouseOverHighlightedResidueInStructure = undefined;
-            this.mouseOverHighlightedResidueInSequence = undefined;
-            this.plugin.managers.interactivity.lociHighlights.clearHighlights();
-            if (this.highlightedResidueInStructure) {
-                this.plugin.managers.interactivity.lociHighlights.highlight({ loci: this.highlightedResidueInStructure })
-            }
-        });
+        this.loadConfig(config);
         this.plugin.canvas3d?.interaction.hover.subscribe((e: HoverEvent) => {
             const structureElementLoci = getStructureElementLoci(e.current.loci)
             if (this.mouseOverHighlightedResidueInStructure && !structureElementLoci) {
@@ -171,12 +143,11 @@ export class TypedMolArt {
             if (this.highligtedInSequence) {
                 highlights.push(this.highligtedInSequence)
             }
-            this.trackManager.setHighlights(highlights);
+            this.trackManager?.setHighlights(highlights);
             if (this.highlightedResidueInStructure) {
                 this.plugin.managers.interactivity.lociHighlights.highlight({ loci: this.highlightedResidueInStructure })
             }
         });
-        this.trackManager.onRendered.on(this.windowResize.bind(this));
         window.addEventListener('resize', this.windowResize.bind(this));
     }
     private windowResize() {
@@ -201,8 +172,46 @@ export class TypedMolArt {
         this.plugin.handleResize();
     }
 
-    public loadUniprot(uniprotId: string) {
-        this.trackManager.render(uniprotId, this.protvistaWrapper);
+    public loadConfig(config: Config) {
+        this.trackManager?.onHighlightChange.offAll();
+        this.trackManager?.onResidueMouseOver.offAll();
+        this.trackManager?.onFragmentMouseOut.offAll();
+        this.trackManager?.onRendered.offAll();
+        this.trackManager = TrackManager.createDefault(config.sequence);
+        this.trackManager.onSelectedStructure.on(output => {
+            this.structureMapping = output.mapping;
+            this.load({
+                url: output.url,
+                format: output.format,
+                data: output.data
+            }, config);
+        });
+
+        this.trackManager.onHighlightChange.on(fragments => {
+            this.overpaintFragments(fragments);
+        });
+        this.trackManager.onResidueMouseOver.on(async resNum => {
+            this.emitSequenceMouseOn.emit(resNum);
+            this.mouseOverHighlightedResidueInStructure = this.findLociFromResidueNumber(resNum);
+            this.mouseOverHighlightedResidueInSequence = resNum;
+            this.highlightStructureResidues();
+        });
+
+        this.trackManager.onFragmentMouseOut.on(() => {
+            this.emitSequenceMouseOff.emit();
+            this.mouseOverHighlightedResidueInStructure = undefined;
+            this.mouseOverHighlightedResidueInSequence = undefined;
+            this.plugin.managers.interactivity.lociHighlights.clearHighlights();
+            if (this.highlightedResidueInStructure) {
+                this.plugin.managers.interactivity.lociHighlights.highlight({ loci: this.highlightedResidueInStructure })
+            }
+        });
+        this.trackManager.onRendered.on(this.windowResize.bind(this));//TODO tady emitSequenceViewerReady?
+        const previousProtvistaManagers = this.protvistaWrapper.getElementsByTagName('protvista-manager');
+        for (let i = 0; i < previousProtvistaManagers.length; i++) {
+            previousProtvistaManagers[i].remove();
+        }
+        this.trackManager.render(this.protvistaWrapper);
     }
 
     private selectFragment(from: number, to: number, data: Structure, chain?: string) {
@@ -338,7 +347,7 @@ export class TypedMolArt {
                 type: 'molecular-surface', typeParams: { alpha: 1 }, color: 'uniform'
             });
             this.setTransparency(this.slider?.value);
-            this.overpaintFragments(this.trackManager.getMarkedFragments());
+            this.overpaintFragments(this.trackManager?.getMarkedFragments() ?? []);
             this.emitStructureLoaded.emit();
         }
         if (ligand) {
@@ -373,15 +382,15 @@ export class TypedMolArt {
     }
     public unhighlightInSequence() {
         this.highligtedInSequence = undefined;
-        this.trackManager.clearHighlights();
+        this.trackManager?.clearHighlights();
         if (this.mouseOverHighlightedResidueInSequence) {
-            this.trackManager.setHighlights([{ start: this.mouseOverHighlightedResidueInSequence, end: this.mouseOverHighlightedResidueInSequence }]);
+            this.trackManager?.setHighlights([{ start: this.mouseOverHighlightedResidueInSequence, end: this.mouseOverHighlightedResidueInSequence }]);
         }
     }
 
     public highlightInSequence(higlight: Highlight) {
         this.highligtedInSequence = higlight;
-        this.trackManager.setHighlights(this.mouseOverHighlightedResidueInSequence ? [higlight, { start: this.mouseOverHighlightedResidueInSequence, end: this.mouseOverHighlightedResidueInSequence }] : [higlight]);
+        this.trackManager?.setHighlights(this.mouseOverHighlightedResidueInSequence ? [higlight, { start: this.mouseOverHighlightedResidueInSequence, end: this.mouseOverHighlightedResidueInSequence }] : [higlight]);
     }
     public focusInStructure(resNum: number, radius: number = 0, chain?: string) {
         const loci = this.findLociFromResidueNumber(resNum, chain)
