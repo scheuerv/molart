@@ -319,8 +319,8 @@ export class TypedMolArt {
         const model = await this.plugin.builders.structure.createModel(trajectory);
         this.structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
         for (const key in config.structure.extrahighlights) {
-            const extraHighlight = config.structure.extrahighlights[key];
-            MS.struct.atomProperty.macromolecular.auth_atom_id
+            const extraHighlight = config.structure?.extrahighlights[key];
+            MS.struct.atomProperty.macromolecular.auth_atom_id;
             const filter: Record<string, Expression> = {};
             if (extraHighlight.residue) {
                 filter['residue-test'] = MS.core.rel.inRange([MS.struct.atomProperty.macromolecular.auth_seq_id(), extraHighlight.residue.authResidueNumFrom, extraHighlight.residue.authResidueNumTo]);
@@ -341,13 +341,43 @@ export class TypedMolArt {
         const water = await this.plugin.builders.structure.tryCreateComponentStatic(this.structure, 'water');
         if (polymer) {
             this.cartoonRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, {
-                type: 'cartoon', color: 'chain-id',
+                type: 'cartoon', color: 'chain-id'
             });
             this.molecularSurfaceRepr = await this.plugin.builders.structure.representation.addRepresentation(polymer, {
                 type: 'molecular-surface', typeParams: { alpha: 1 }, color: 'uniform'
             });
             this.setTransparency(this.slider?.value);
             this.overpaintFragments(this.trackManager?.getMarkedFragments() ?? []);
+            const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
+            if (data) {
+                const filter: Record<string, Expression> = {
+                    "residue-test": MS.core.logic.not([
+                        MS.core.rel.inRange([
+                            MS.struct.atomProperty.macromolecular.auth_seq_id(),
+                            Math.min(...this.structureMapping.fragmentMappings.map(fragment => {
+                                return fragment.pdbStart;
+                            })),
+                            Math.max(...this.structureMapping.fragmentMappings.map(fragment => {
+                                return fragment.pdbEnd;
+                            }))
+                        ])
+                    ])
+                };
+                const selection = Script.getStructureSelection(
+                    MS.struct.generator.atomGroups(filter),
+                    data
+                );
+                const bundle = Bundle.fromSelection(selection);
+                const update = this.plugin.build();
+                update.to(this.cartoonRepr).apply(StateTransforms.Representation.OverpaintStructureRepresentation3DFromBundle, {
+                    layers: [{
+                        bundle: bundle,
+                        color: Color(0x555555),
+                        clear: false
+                    }]
+                });
+                update.commit();
+            }
             this.emitStructureLoaded.emit();
         }
         if (ligand) {
