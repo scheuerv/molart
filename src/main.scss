@@ -5,7 +5,6 @@
     width: calc(50% - 2px);
     height: 100%;
     top: 0;
-    position: absolute;
 }
 
 #pv-pdb {
@@ -25,10 +24,24 @@
 .transparency-slider {
     width: calc(100% - 6px);
     margin-left: 3px;
-    margin-top: calc(100vh - 25px);
+    margin-top: calc(100vh - 25px - 70px);
     position: relative;
 }
 .transparency-slider input {
     width: 100%;
     position: relative;
+}
+
+.structure-viewer-wrapper {
+    height: calc(100% - 70px);
+    width: 100%;
+    position: absolute;
+}
+
+i.fas.fa-download {
+    cursor: pointer;
+}
+
+.structure-viewer-header {
+    height: 70px;
 }

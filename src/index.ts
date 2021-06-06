@@ -88,7 +88,7 @@ export class TypedMolArt {
             }
         });
         resizeObserver.observe(this.protvistaWrapper);
-        this.plugin = createPlugin(this.target, {
+        this.plugin = createPlugin(d3.select(this.target).append("div").attr("class", "structure-viewer-wrapper").node()!, {
             ...DefaultPluginUISpec(),
             layout: {
                 initial: {
@@ -97,6 +97,7 @@ export class TypedMolArt {
                 }
             },
         });
+        d3.select(this.target).insert("div", ":first-child").attr("class", "structure-viewer-header").append("i").attr("class", "fas fa-download");
         this.target.append(this.slider.parentNode!);
         this.slider.addEventListener('change', () => {
             this.setTransparency(this.slider!.value);
@@ -312,15 +313,35 @@ export class TypedMolArt {
         else {
             throw new Error("Structure url or data were not provided!")
         }
-        const model = await this.plugin.builders.structure.createModel(trajectory);
-        this.structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
-
         const trajectory = await this.plugin.builders.structure.parseTrajectory(loadedData, format);
         const model = await this.plugin.builders.structure.createModel(trajectory);
         this.structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
-        for (const key in config.structure.extrahighlights) {
-            const extraHighlight = config.structure?.extrahighlights[key];
-            MS.struct.atomProperty.macromolecular.auth_atom_id;
+        let select: d3.Selection<HTMLSelectElement, unknown, null, undefined>;
+        const extraHiglights = config.structure.extrahighlights;
+        const extraHiglightsSelectors: ExtraHiglight[] = [];
+        if (extraHiglights.length > 0) {
+            select = d3.select(this.target).select(".structure-viewer-header").insert("div", ":nth-child(2)").style("display","inline-block").append("select").attr("name", "highlights").attr("multiple", true);
+            select.on("change", () => {
+                Array.from(select.node()!.options).forEach(async option => {
+                    const extraHighlight = extraHiglightsSelectors[parseInt(option.value)];
+                    if (!extraHighlight.isVisible && option.selected) {
+                        const highlightComponent = await this.plugin.builders.structure.tryCreateComponentFromExpression(this.structure, extraHighlight.expression, extraHighlight.key);
+                        extraHighlight.selector = highlightComponent!;
+                        await this.plugin.builders.structure.representation.addRepresentation(highlightComponent!, extraHighlight.props);
+                        extraHighlight.isVisible = true;
+                    }
+                    else if (extraHighlight.isVisible && !option.selected) {
+                        const update = this.plugin.build();
+                        update.delete(extraHighlight.selector);
+                        update.commit();
+                        extraHighlight.isVisible = false;
+                    }
+                });
+            })
+        }
+        for (const key in extraHiglights) {
+            const extraHighlight = extraHiglights[key];
+            select!.append("option").attr("value", key).attr("selected", "selected").text(extraHighlight.label);
             const filter: Record<string, Expression> = {};
             if (extraHighlight.residue) {
                 filter['residue-test'] = MS.core.rel.inRange([MS.struct.atomProperty.macromolecular.auth_seq_id(), extraHighlight.residue.authResidueNumFrom, extraHighlight.residue.authResidueNumTo]);
@@ -333,6 +354,7 @@ export class TypedMolArt {
             }
             const expression = MS.struct.generator.atomGroups(filter);
             const highlightComponent = await this.plugin.builders.structure.tryCreateComponentFromExpression(this.structure, expression, `extra-highlight-${key}`);
+            extraHiglightsSelectors.push({ selector: highlightComponent!, isVisible: true, props: extraHighlight.props, expression: expression, key: `extra-highlight-${key}` });
             await this.plugin.builders.structure.representation.addRepresentation(highlightComponent!, extraHighlight.props);
         }
         const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(this.structure, 'polymer');
@@ -465,6 +487,7 @@ export class TypedMolArt {
 export type Config = {
     structure: {
         extrahighlights: {
+            label: string,
             props: StructureRepresentationBuiltInProps,
             residue?: {
                 authResidueNumFrom: number,
@@ -494,6 +517,14 @@ type Residue = {
     isHet: boolean,
     name: string,
     seqNumber: number
+}
+
+type ExtraHiglight = {
+    isVisible: boolean,
+    selector: StateObjectSelector,
+    readonly props: StructureRepresentationBuiltInProps,
+    readonly expression: Expression,
+    readonly key: string,
 }
 
 const DefaultConfig: Config = {
