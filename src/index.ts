@@ -317,9 +317,9 @@ export class TypedMolArt {
         const model = await this.plugin.builders.structure.createModel(trajectory);
         this.structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
         let select: d3.Selection<HTMLSelectElement, unknown, null, undefined>;
-        const extraHiglights = config.structure.extrahighlights;
+        const extraHiglights = config.structure?.extrahighlights;
         const extraHiglightsSelectors: ExtraHiglight[] = [];
-        if (extraHiglights.length > 0) {
+        if (extraHiglights && extraHiglights.length > 0) {
             const previousSelect= d3.select(this.target).select(".structure-viewer-header").select("select").node();
             if (previousSelect) {
                 ((previousSelect as Element).parentNode as Element).remove();
@@ -344,7 +344,7 @@ export class TypedMolArt {
             })
         }
         for (const key in extraHiglights) {
-            const extraHighlight = extraHiglights[key];
+            const extraHighlight = extraHiglights[parseInt(key)];
             select!.append("option").attr("value", key).attr("selected", "selected").text(extraHighlight.label);
             const filter: Record<string, Expression> = {};
             if (extraHighlight.residue) {
@@ -489,7 +489,7 @@ export class TypedMolArt {
 (window as any).TypedMolArt = new TypedMolArt();
 
 export type Config = {
-    structure: {
+    structure?: {
         extrahighlights: {
             label: string,
             props: StructureRepresentationBuiltInProps,
@@ -536,6 +536,6 @@ const DefaultConfig: Config = {
         extrahighlights: []
     },
     sequence: {
-
+        uniprotId: "P37840",
     }
 }
