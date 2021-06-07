@@ -320,7 +320,11 @@ export class TypedMolArt {
         const extraHiglights = config.structure.extrahighlights;
         const extraHiglightsSelectors: ExtraHiglight[] = [];
         if (extraHiglights.length > 0) {
-            select = d3.select(this.target).select(".structure-viewer-header").insert("div", ":nth-child(2)").style("display","inline-block").append("select").attr("name", "highlights").attr("multiple", true);
+            const previousSelect= d3.select(this.target).select(".structure-viewer-header").select("select").node();
+            if (previousSelect) {
+                ((previousSelect as Element).parentNode as Element).remove();
+            }
+            select = d3.select(this.target).select(".structure-viewer-header").insert("div", ":nth-child(2)").style("display", "inline-block").append("select").attr("name", "highlights").attr("multiple", true);
             select.on("change", () => {
                 Array.from(select.node()!.options).forEach(async option => {
                     const extraHighlight = extraHiglightsSelectors[parseInt(option.value)];
