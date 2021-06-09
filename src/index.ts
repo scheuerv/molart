@@ -97,7 +97,7 @@ export class TypedMolArt {
                 }
             },
         });
-        d3.select(this.target).insert("div", ":first-child").attr("class", "structure-viewer-header").append("i").attr("class", "fas fa-download");
+        d3.select(this.target).insert("div", ":first-child").attr("class", "structure-viewer-header").append("i").attr("class", "fas fa-download fa-2x");
         this.target.append(this.slider.parentNode!);
         this.slider.addEventListener('change', () => {
             this.setTransparency(this.slider!.value);
@@ -316,32 +316,15 @@ export class TypedMolArt {
         const trajectory = await this.plugin.builders.structure.parseTrajectory(loadedData, format);
         const model = await this.plugin.builders.structure.createModel(trajectory);
         this.structure = await this.plugin.builders.structure.createStructure(model, assemblyId ? { name: 'assembly', params: { id: assemblyId } } : { name: 'model', params: {} });
-        let select: d3.Selection<HTMLSelectElement, unknown, null, undefined>;
+        let select: d3.Selection<HTMLSelectElement, unknown, null, undefined> | undefined;
         const extraHiglights = config.structure?.extrahighlights;
         const extraHiglightsSelectors: ExtraHiglight[] = [];
         if (extraHiglights && extraHiglights.length > 0) {
-            const previousSelect= d3.select(this.target).select(".structure-viewer-header").select("select").node();
+            const previousSelect = d3.select(this.target).select(".structure-viewer-header").select("select").node();
             if (previousSelect) {
                 ((previousSelect as Element).parentNode as Element).remove();
             }
-            select = d3.select(this.target).select(".structure-viewer-header").insert("div", ":nth-child(2)").style("display", "inline-block").append("select").attr("name", "highlights").attr("multiple", true);
-            select.on("change", () => {
-                Array.from(select.node()!.options).forEach(async option => {
-                    const extraHighlight = extraHiglightsSelectors[parseInt(option.value)];
-                    if (!extraHighlight.isVisible && option.selected) {
-                        const highlightComponent = await this.plugin.builders.structure.tryCreateComponentFromExpression(this.structure, extraHighlight.expression, extraHighlight.key);
-                        extraHighlight.selector = highlightComponent!;
-                        await this.plugin.builders.structure.representation.addRepresentation(highlightComponent!, extraHighlight.props);
-                        extraHighlight.isVisible = true;
-                    }
-                    else if (extraHighlight.isVisible && !option.selected) {
-                        const update = this.plugin.build();
-                        update.delete(extraHighlight.selector);
-                        update.commit();
-                        extraHighlight.isVisible = false;
-                    }
-                });
-            })
+            select = d3.select(this.target).select(".structure-viewer-header").insert("div", ":first-child").style("display", "inline-block").append("select").attr("name", "highlights").attr("multiple", "multiple");
         }
         for (const key in extraHiglights) {
             const extraHighlight = extraHiglights[parseInt(key)];
@@ -360,6 +343,34 @@ export class TypedMolArt {
             const highlightComponent = await this.plugin.builders.structure.tryCreateComponentFromExpression(this.structure, expression, `extra-highlight-${key}`);
             extraHiglightsSelectors.push({ selector: highlightComponent!, isVisible: true, props: extraHighlight.props, expression: expression, key: `extra-highlight-${key}` });
             await this.plugin.builders.structure.representation.addRepresentation(highlightComponent!, extraHighlight.props);
+        }
+        if (extraHiglights && extraHiglights.length > 0) {
+            if (select) {
+                $(select.node()!).multiselect(
+                    {
+                        buttonClass: 'custom-select'
+                    }
+                );
+                $(select.node()!).multiselect("setOptions",
+                    {
+                        onChange: async (option: JQuery, checked: boolean) => {
+                            const extraHighlight = extraHiglightsSelectors[parseInt($(option).val() as string)];
+                            if (!extraHighlight.isVisible && checked) {
+                                const highlightComponent = await this.plugin.builders.structure.tryCreateComponentFromExpression(this.structure, extraHighlight.expression, extraHighlight.key);
+                                extraHighlight.selector = highlightComponent!;
+                                await this.plugin.builders.structure.representation.addRepresentation(highlightComponent!, extraHighlight.props);
+                                extraHighlight.isVisible = true;
+                            }
+                            else if (extraHighlight.isVisible && !checked) {
+                                const update = this.plugin.build();
+                                update.delete(extraHighlight.selector);
+                                update.commit();
+                                extraHighlight.isVisible = false;
+                            }
+                        }
+                    }
+                );
+            }
         }
         const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(this.structure, 'polymer');
         const ligand = await this.plugin.builders.structure.tryCreateComponentStatic(this.structure, 'ligand');
