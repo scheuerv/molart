@@ -1,53 +1,15 @@
 import { TrackFragment } from "uniprot-nightingale/src/manager/track-manager";
 const blender = require('color-blend');
 import ColorConvert from "color-convert";
+import { RGB } from "color-convert/conversions";
 
-function getStartsWith(start: number, sortedFragments: TrackFragment[]): [TrackFragment[], number] {
-    const newFragments: TrackFragment[] = [];
-    for (let i = 0; i < sortedFragments.length; i++) {
-        const fragment = sortedFragments[i];
-        if (fragment.start == start) {
-            newFragments.push(fragment);
-        }
-        else if (fragment.start > start) {
-            return [newFragments, i];
-        }
-    }
-    return [newFragments, sortedFragments.length];
-}
-
-function getNearestEnd(openedFragments: TrackFragment[]) {
-    if (openedFragments.length == 0) {
-        throw new Error("At least one fragment required");
-    }
-    let minEnd = Number.MAX_SAFE_INTEGER;
-    for (let i = 0; i < openedFragments.length; i++) {
-        const fragment = openedFragments[i];
-        if (fragment.end < minEnd) {
-            minEnd = fragment.end;
-        }
-    }
-    return minEnd;
-}
-function mixColor(openedFragments: TrackFragment[]): string {
-    if (openedFragments.length == 0) {
-        throw new Error("At least one fragment required");
-    }
-    let color = ColorConvert.hex.rgb(openedFragments[0].color);
-    let rgbaColor = { a: 1, r: color[0], g: color[1], b: color[2] };
-    for (let i = 1; i < openedFragments.length; i++) {
-        const cc = ColorConvert.hex.rgb(openedFragments[i].color);
-        rgbaColor = blender.darken(rgbaColor, { a: 1, r: cc[0], g: cc[1], b: cc[2] });
-    }
-    return '#' + ColorConvert.rgb.hex([rgbaColor.r, rgbaColor.g, rgbaColor.b]);
-}
 export function mixFragmentColors(fragments: TrackFragment[]): TrackFragment[] {
     const mixedColorFragments: TrackFragment[] = [];
     if (fragments.length > 0) {
         const sortedFragments = fragments.sort((a, b) => {
             return a.start - b.start;
         });
-        let lastStart = sortedFragments[0].start;
+        let lastStart: number = sortedFragments[0].start;
         let [openedFragments, nextId] = getStartsWith(lastStart, sortedFragments);
         while (nextId < sortedFragments.length || openedFragments.length > 0) {
             const nearestEnd = getNearestEnd(openedFragments);
@@ -91,4 +53,45 @@ export function mixFragmentColors(fragments: TrackFragment[]): TrackFragment[] {
         }
     }
     return mixedColorFragments;
+}
+
+function getStartsWith(start: number, sortedFragments: TrackFragment[]): [TrackFragment[], number] {
+    const newFragments: TrackFragment[] = [];
+    for (let i = 0; i < sortedFragments.length; i++) {
+        const fragment = sortedFragments[i];
+        if (fragment.start == start) {
+            newFragments.push(fragment);
+        }
+        else if (fragment.start > start) {
+            return [newFragments, i];
+        }
+    }
+    return [newFragments, sortedFragments.length];
+}
+
+function getNearestEnd(openedFragments: TrackFragment[]): number {
+    if (openedFragments.length == 0) {
+        throw new Error("At least one fragment required");
+    }
+    let minEnd: number = Number.MAX_SAFE_INTEGER;
+    for (let i = 0; i < openedFragments.length; i++) {
+        const fragment: TrackFragment = openedFragments[i];
+        if (fragment.end < minEnd) {
+            minEnd = fragment.end;
+        }
+    }
+    return minEnd;
+}
+
+function mixColor(openedFragments: TrackFragment[]): string {
+    if (openedFragments.length == 0) {
+        throw new Error("At least one fragment required");
+    }
+    let color: RGB = ColorConvert.hex.rgb(openedFragments[0].color);
+    let rgbaColor = { a: 0.5, r: color[0], g: color[1], b: color[2] };
+    for (let i = 1; i < openedFragments.length; i++) {
+        const nextColor: RGB = ColorConvert.hex.rgb(openedFragments[i].color);
+        rgbaColor = blender.darken(rgbaColor, { a: 0.5, r: nextColor[0], g: nextColor[1], b: nextColor[2] });
+    }
+    return '#' + ColorConvert.rgb.hex([rgbaColor.r, rgbaColor.g, rgbaColor.b]);
 }

@@ -8,13 +8,11 @@ import "./index.html";
 import { BuiltInTrajectoryFormat } from "Molstar/mol-plugin-state/formats/trajectory";
 import { Asset } from "Molstar/mol-util/assets";
 import { ChainIndex, EntityIndex, ResidueIndex, Structure, StructureElement, StructureSelection } from "Molstar/mol-model/structure";
-(globalThis as any).d3 = require("d3")
 import { Script } from "Molstar/mol-script/script";
 import { Color } from "Molstar/mol-util/color";
 import { Bundle } from "Molstar/mol-model/structure/structure/element/bundle";
 import { TrackFragment, Config as SequenceConfig, Highlight } from "uniprot-nightingale/src/manager/track-manager";
 import { mixFragmentColors } from "./fragment-color-mixer";
-import d3 = require('d3');
 import $ from 'jquery';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -23,7 +21,6 @@ import 'bootstrap-multiselect/dist/css/bootstrap-multiselect.css';
 import { Mapping } from "uniprot-nightingale/src/parsers/track-parser"
 import HighlightFinderMolstarEvent, { MolstarAuthSeqIdExtractor } from './highlight-finder-molstar-event';
 import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
-import HoverEvent = Canvas3D.HoverEvent;
 import HighlightFinderNightingaleEvent from './highlight-finder-nightingale-event';
 import { StateTransforms } from 'Molstar/mol-plugin-state/transforms';
 import { StateObjectSelector } from 'Molstar/mol-state';
@@ -36,6 +33,7 @@ import { StructureProperties } from "Molstar/mol-model/structure";
 import { getStructureElementLoci } from './molstar-utils';
 require('Molstar/mol-plugin-ui/skin/light.scss');
 require('./main.scss');
+const d3 = require('d3');
 
 type LoadParams = { url?: string, format?: BuiltInTrajectoryFormat, isBinary?: boolean, assemblyId?: string, data?: any }
 
@@ -108,7 +106,7 @@ export class TypedMolArt {
             this.setTransparency(this.slider!.value);
         })
         this.loadConfig(config);
-        this.plugin.canvas3d?.interaction.hover.subscribe((e: HoverEvent) => {
+        this.plugin.canvas3d?.interaction.hover.subscribe((e: Canvas3D.HoverEvent) => {
             const structureElementLoci = getStructureElementLoci(e.current.loci)
             if (this.mouseOverHighlightedResidueInStructure && !structureElementLoci) {
                 this.emitStructureMouseOff.emit();
@@ -249,10 +247,10 @@ export class TypedMolArt {
             let startMapped = this.highlightFinderNightingaleEvent.calculate(fragment.start, this.structureMapping);
             let endMapped = this.highlightFinderNightingaleEvent.calculate(fragment.end, this.structureMapping);
             if (!startMapped && endMapped) {
-                startMapped = this.highlightFinderNightingaleEvent.getPositionOfFirstResidueInFragment(fragment.end, this.structureMapping);
+                startMapped = this.highlightFinderNightingaleEvent.getStructurePositionOfFirstResidueInFragment(fragment.end, this.structureMapping);
             }
             else if (!endMapped) {
-                endMapped = this.highlightFinderNightingaleEvent.getPositionOfLastResidueInFragment(fragment.start, this.structureMapping);
+                endMapped = this.highlightFinderNightingaleEvent.getStructurePositionOfLastResidueInFragment(fragment.start, this.structureMapping);
             }
             if (startMapped && endMapped) {
                 const sel = this.selectFragment(startMapped, endMapped, data);

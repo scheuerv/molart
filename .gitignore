@@ -7,3 +7,4 @@ build
 .yalc
 yalc.lock
 .vscode/launch.json
+coverage
