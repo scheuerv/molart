@@ -287,24 +287,30 @@ export class TypedMolArt {
         if (!data) return;
         const params: { bundle: StructureElement.Bundle; color: Color; clear: boolean }[] = [];
         mixFragmentColors(fragments).forEach((fragment) => {
+            let fragmentStart = fragment.start;
+            let fragmentEnd = fragment.end;
+            if (this.structureMapping.uniprotStart > fragmentStart && this.structureMapping.uniprotEnd < fragmentEnd) {
+                fragmentStart = this.structureMapping.uniprotStart;
+                fragmentEnd = this.structureMapping.uniprotEnd;
+            }
             let startMapped = this.highlightFinderNightingaleEvent.calculate(
-                fragment.start,
+                fragmentStart,
                 this.structureMapping
             );
             let endMapped = this.highlightFinderNightingaleEvent.calculate(
-                fragment.end,
+                fragmentEnd,
                 this.structureMapping
             );
             if (!startMapped && endMapped) {
                 startMapped =
                     this.highlightFinderNightingaleEvent.getStructurePositionOfFirstResidueInFragment(
-                        fragment.end,
+                        fragmentEnd,
                         this.structureMapping
                     );
             } else if (!endMapped) {
                 endMapped =
                     this.highlightFinderNightingaleEvent.getStructurePositionOfLastResidueInFragment(
-                        fragment.start,
+                        fragmentStart,
                         this.structureMapping
                     );
             }
