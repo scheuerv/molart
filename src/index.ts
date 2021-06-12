@@ -94,16 +94,12 @@ export class TypedMolArt {
         .node()!;
 
     init(
-        target: string | HTMLElement,
-        targetProtvista: string,
+        target: HTMLElement,
+        targetProtvista: HTMLElement,
         config: Config = DefaultConfig
     ): void {
-        this.target = typeof target === "string" ? document.getElementById(target)! : target;
-        const wrapper = document.getElementById(targetProtvista);
-        if (!wrapper) {
-            throw new Error("Invalid Protvista target Id");
-        }
-        this.protvistaWrapper = wrapper;
+        this.target = target;
+        this.protvistaWrapper = targetProtvista;
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 if (entry.contentBoxSize[0]) {
