@@ -3,7 +3,6 @@ import { DefaultPluginUISpec } from "Molstar/mol-plugin-ui/spec";
 import { PluginContext } from "Molstar/mol-plugin/context";
 import { TrackManager } from "uniprot-nightingale/src/index";
 import { MolScriptBuilder as MS } from "Molstar/mol-script/language/builder";
-import "./index.html";
 import { BuiltInTrajectoryFormat } from "Molstar/mol-plugin-state/formats/trajectory";
 import { Asset } from "Molstar/mol-util/assets";
 import {
