@@ -20,7 +20,7 @@ export class MolstarAuthSeqIdExtractor implements AuthSeqIdExtractor {
     }
 }
 export default class HighlightFinderMolstarEvent {
-    constructor(private readonly authSeqIdExtractor: AuthSeqIdExtractor) { };
+    constructor(private readonly authSeqIdExtractor: AuthSeqIdExtractor) {}
 
     public calculate(e: Canvas3D.HoverEvent, structureMapping: Mapping): Highlight[] {
         const result: Highlight[] = [];
@@ -28,7 +28,10 @@ export default class HighlightFinderMolstarEvent {
         if (authSeqId) {
             const position = this.getPosition(authSeqId, structureMapping);
             if (position) {
-                if (position >= structureMapping.uniprotStart && position <= structureMapping.uniprotEnd) {
+                if (
+                    position >= structureMapping.uniprotStart &&
+                    position <= structureMapping.uniprotEnd
+                ) {
                     result.push({ start: position, end: position });
                 }
             }
@@ -42,16 +45,18 @@ export default class HighlightFinderMolstarEvent {
         if (fragmentMapping) {
             const useMapping = structureMapping.uniprotStart == fragmentMapping.pdbStart;
             if (useMapping) {
-                position = authSeqId
-            }
-            else {
+                position = authSeqId;
+            } else {
                 position = authSeqId - fragmentMapping.pdbStart + fragmentMapping.from;
             }
         }
         return position;
     }
 
-    private getFragmentMapping(resNum: number, structureMapping: Mapping): FragmentMapping | undefined {
+    private getFragmentMapping(
+        resNum: number,
+        structureMapping: Mapping
+    ): FragmentMapping | undefined {
         for (let i = 0; i < structureMapping.fragmentMappings.length; i++) {
             const fragmentMapping = structureMapping.fragmentMappings[i];
             if (fragmentMapping.pdbStart <= resNum && fragmentMapping.pdbEnd >= resNum) {

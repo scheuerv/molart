@@ -8,7 +8,9 @@
         "watch": "npm run watch-webpack",
         "watch-webpack": "webpack -w --mode development",
         "start": "webpack serve",
-        "test": "jest --no-cache"
+        "test": "jest --no-cache",
+        "lint": "eslint . --ext .ts",
+        "lint-fix": "eslint . --ext .ts --fix"
     },
     "keywords": [],
     "license": "Apache-2.0",
@@ -57,6 +59,12 @@
         "webpack": "^5.24.4",
         "webpack-cli": "^4.5.0",
         "webpack-dev-server": "^4.0.0-beta.1",
-        "webpack-version-file-plugin": "^0.4.0"
+        "webpack-version-file-plugin": "^0.4.0",
+        "prettier": "^2.3.1",
+        "eslint": "^7.28.0",
+        "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-prettier": "^3.4.0",
+        "@typescript-eslint/eslint-plugin": "^4.26.1",
+        "@typescript-eslint/parser": "^4.26.1"
     }
 }

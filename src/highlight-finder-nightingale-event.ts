@@ -14,15 +14,24 @@ export default class HighlightFinderNightingaleEvent {
         return undefined;
     }
 
-    public getStructurePositionOfLastResidueInFragment(resNum: number, structureMapping: Mapping): number | undefined {
+    public getStructurePositionOfLastResidueInFragment(
+        resNum: number,
+        structureMapping: Mapping
+    ): number | undefined {
         return this.getFragmentMapping(resNum, structureMapping)?.pdbEnd;
     }
 
-    public getStructurePositionOfFirstResidueInFragment(resNum: number, structureMapping: Mapping): number | undefined {
+    public getStructurePositionOfFirstResidueInFragment(
+        resNum: number,
+        structureMapping: Mapping
+    ): number | undefined {
         return this.getFragmentMapping(resNum, structureMapping)?.pdbStart;
     }
 
-    private getFragmentMapping(resNum: number, structureMapping: Mapping): FragmentMapping | undefined {
+    private getFragmentMapping(
+        resNum: number,
+        structureMapping: Mapping
+    ): FragmentMapping | undefined {
         for (let i = 0; i < structureMapping.fragmentMappings.length; i++) {
             const fragmentMapping = structureMapping.fragmentMappings[i];
             if (fragmentMapping.from <= resNum && fragmentMapping.to >= resNum) {
