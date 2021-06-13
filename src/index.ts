@@ -16,18 +16,13 @@ import {
 import { Script } from "Molstar/mol-script/script";
 import { Color } from "Molstar/mol-util/color";
 import { Bundle } from "Molstar/mol-model/structure/structure/element/bundle";
-import {
-    TrackFragment,
-    Config as SequenceConfig,
-    Highlight
-} from "uniprot-nightingale/src/manager/track-manager";
+import { Config as SequenceConfig, Highlight } from "uniprot-nightingale/src/manager/track-manager";
 import { mixFragmentColors } from "./fragment-color-mixer";
 import $ from "jquery";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "bootstrap-multiselect";
 import "bootstrap-multiselect/dist/css/bootstrap-multiselect.css";
-import { Mapping } from "uniprot-nightingale/src/parsers/track-parser";
 import HighlightFinderMolstarEvent, {
     MolstarAuthSeqIdExtractor
 } from "./highlight-finder-molstar-event";
@@ -44,7 +39,9 @@ import { StructureProperties } from "Molstar/mol-model/structure";
 import { getStructureElementLoci } from "./molstar-utils";
 require("Molstar/mol-plugin-ui/skin/light.scss");
 require("./main.scss");
-const d3 = require("d3");
+import * as d3 from "d3";
+import { Mapping } from "uniprot-nightingale/src/types/mapping";
+import { TrackFragment } from "uniprot-nightingale/src/types/accession";
 
 type LoadParams = {
     url?: string;
@@ -93,11 +90,7 @@ export class TypedMolArt {
         .attr("value", 50)
         .node()!;
 
-    init(
-        target: HTMLElement,
-        targetProtvista: HTMLElement,
-        config: Config = DefaultConfig
-    ): void {
+    init(target: HTMLElement, targetProtvista: HTMLElement, config: Config = DefaultConfig): void {
         this.target = target;
         this.protvistaWrapper = targetProtvista;
         const resizeObserver = new ResizeObserver((entries) => {
@@ -289,7 +282,10 @@ export class TypedMolArt {
         mixFragmentColors(fragments).forEach((fragment) => {
             let fragmentStart = fragment.start;
             let fragmentEnd = fragment.end;
-            if (this.structureMapping.uniprotStart > fragmentStart && this.structureMapping.uniprotEnd < fragmentEnd) {
+            if (
+                this.structureMapping.uniprotStart > fragmentStart &&
+                this.structureMapping.uniprotEnd < fragmentEnd
+            ) {
                 fragmentStart = this.structureMapping.uniprotStart;
                 fragmentEnd = this.structureMapping.uniprotEnd;
             }
@@ -626,12 +622,12 @@ export class TypedMolArt {
         this.trackManager?.setHighlights(
             this.mouseOverHighlightedResidueInSequence
                 ? [
-                    higlight,
-                    {
-                        start: this.mouseOverHighlightedResidueInSequence,
-                        end: this.mouseOverHighlightedResidueInSequence
-                    }
-                ]
+                      higlight,
+                      {
+                          start: this.mouseOverHighlightedResidueInSequence,
+                          end: this.mouseOverHighlightedResidueInSequence
+                      }
+                  ]
                 : [higlight]
         );
     }

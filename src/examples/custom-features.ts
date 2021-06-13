@@ -4,12 +4,11 @@ export const customFeatures = {
     features: [
         {
             type: "UNIQUE_MAXQ",
-            ftId: "this is my id",
             category: "PROTEOMICS",
             description: "MaxQuant",
             begin: "17",
             end: "27",
-            color: "#00B88A",
+            color: "#00B88A"
         },
         {
             type: "UNIQUE_MAXQ",
@@ -17,7 +16,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "18",
             end: "29",
-            color: "#00B88A",
+            color: "#00B88A"
         },
         {
             type: "UNIQUE_MAXQ",
@@ -25,7 +24,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "28",
             end: "33",
-            color: "#00B88A",
+            color: "#00B88A"
         },
         {
             type: "UNIQUE_MAXQ",
@@ -33,7 +32,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "47",
             end: "59",
-            color: "#00B88A",
+            color: "#00B88A"
         },
         {
             type: "UNIQUE_MAXQ",
@@ -41,7 +40,7 @@ export const customFeatures = {
             description: "N-APP",
             begin: "86",
             end: "97",
-            color: "#00B88A",
+            color: "#00B88A"
         },
         {
             type: "UNIQUE_MAXQ",
@@ -49,7 +48,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "672",
             end: "678",
-            color: "#00B88A",
+            color: "#00B88A"
         },
         {
             type: "UNIQUE_MAXQ",
@@ -57,7 +56,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "72",
             end: "83",
-            color: "#00B88A",
+            color: "#00B88A"
         },
         {
             type: "UNIQUE_MAXQ",
@@ -65,7 +64,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "52",
             end: "61",
-            color: "#00B88A",
+            color: "#00B88A"
         },
         {
             type: "UNIQUE_MAXQ",
@@ -73,7 +72,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "688",
             end: "697",
-            color: "#00B88A",
+            color: "#00B88A"
         },
         {
             type: "NON_UNIQUE_MAXQ",
@@ -81,7 +80,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "96",
             end: "110",
-            color: "#FFCC33",
+            color: "#FFCC33"
         },
         {
             type: "NON_UNIQUE_MAXQ",
@@ -89,7 +88,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "181",
             end: "188",
-            color: "#FFCC33",
+            color: "#FFCC33"
         },
         {
             type: "NON_UNIQUE_MAXQ",
@@ -97,7 +96,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "417",
             end: "423",
-            color: "#FFCC33",
+            color: "#FFCC33"
         },
         {
             type: "NON_UNIQUE_MAXQ",
@@ -105,7 +104,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "391",
             end: "402",
-            color: "#FFCC33",
+            color: "#FFCC33"
         },
         {
             type: "NON_UNIQUE_MAXQ",
@@ -113,7 +112,7 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "523",
             end: "530",
-            color: "#FFCC33",
+            color: "#FFCC33"
         },
         {
             type: "NON_UNIQUE_MAXQ",
@@ -121,97 +120,96 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "732",
             end: "741",
-            color: "#FFCC33",
+            color: "#FFCC33"
         },
         {
             type: "CATALYTIC_SITE",
             category: "DOMAINS_AND_SITES",
             description: "Inherited through a sequence alignment",
             begin: "147",
-            end: "147",
+            end: "147"
         },
         {
             type: "CATALYTIC_SITE",
             category: "DOMAINS_AND_SITES",
             description: "Inherited through a sequence alignment",
             begin: "151",
-            end: "151",
+            end: "151"
         },
         {
             type: "CATALYTIC_SITE",
             category: "DOMAINS_AND_SITES",
             description: "Inherited through a sequence alignment",
             begin: "168",
-            end: "168",
+            end: "168"
         },
         {
             type: "CATALYTIC_SITE",
             category: "DOMAINS_AND_SITES",
             description: "Inherited through a sequence alignment",
             begin: "677",
-            end: "677",
+            end: "677"
         },
         {
             type: "CATALYTIC_SITE",
             category: "DOMAINS_AND_SITES",
             description: "Inherited through a sequence alignment",
             begin: "681",
-            end: "681",
+            end: "681"
         },
         {
             type: "CATALYTIC_SITE",
             category: "DOMAINS_AND_SITES",
             description: "Inherited through a sequence alignment",
             begin: "684",
-            end: "684",
+            end: "684"
         },
         {
             type: "CATALYTIC_SITE",
             category: "DOMAINS_AND_SITES",
             description: "Inherited through a sequence alignment",
             begin: "685",
-            end: "685",
+            end: "685"
         },
         {
             type: "NOVEL_FEATURE",
             category: "NOVELTIES",
             begin: "43",
-            end: "45",
+            end: "45"
         },
         {
             type: "TURN",
             category: "STRUCTURAL",
             begin: "47",
             end: "49",
-            color: "#00CCCC",
+            color: "#00CCCC"
         },
         {
             type: "STRAND",
             category: "STRUCTURAL",
             begin: "52",
             end: "54",
-            color: "#70E000",
+            color: "#70E000"
         },
         {
             type: "STRAND",
             category: "STRUCTURAL",
             begin: "56",
             end: "58",
-            color: "#70E000",
+            color: "#70E000"
         },
         {
             type: "HELIX",
             category: "STRUCTURAL",
             begin: "66",
             end: "76",
-            color: "#FF66FF",
+            color: "#FF66FF"
         },
 
         {
             type: "VARIANT",
             category: "VARIATION",
-            description:
-                "Same mutation, opposite predictions, same xrefs",
+            description: "Same mutation, opposite predictions, same xrefs",
             alternativeSequence: "S",
             begin: "91",
             end: "91",
@@ -219,22 +217,22 @@ export const customFeatures = {
                 {
                     name: "ExAC",
                     id: "rs747355134",
-                    url: "http://exac.broadinstitute.org/dbsnp/rs747355134",
-                },
+                    url: "http://exac.broadinstitute.org/dbsnp/rs747355134"
+                }
             ],
             wildType: "P",
             predictions: [
                 {
                     predictionValType: "looking good",
                     score: 0.001,
-                    predAlgorithmNameType: "PolyPhen",
+                    predAlgorithmNameType: "PolyPhen"
                 },
                 {
                     predictionValType: "looking still good",
                     score: 0.93,
-                    predAlgorithmNameType: "SIFT",
-                },
-            ],
+                    predAlgorithmNameType: "SIFT"
+                }
+            ]
         },
         {
             type: "VARIANT",
@@ -248,12 +246,12 @@ export const customFeatures = {
                 {
                     name: "ExAC",
                     id: "rs1234567",
-                    url: "http://exac.broadinstitute.org/dbsnp/rs1234567",
+                    url: "http://exac.broadinstitute.org/dbsnp/rs1234567"
                 },
                 {
                     name: "OtherXRef",
-                    id: "oxr:1234",
-                },
+                    id: "oxr:1234"
+                }
             ],
             evidences: [
                 {
@@ -262,24 +260,23 @@ export const customFeatures = {
                         name: "PubMed",
                         id: "23292937",
                         url: "http://www.ncbi.nlm.nih.gov/pubmed/23292937",
-                        alternativeUrl:
-                            "http://europepmc.org/abstract/MED/23292937",
-                    },
-                },
+                        alternativeUrl: "http://europepmc.org/abstract/MED/23292937"
+                    }
+                }
             ],
             wildType: "L",
             predictions: [
                 {
                     predictionValType: "unknown",
                     score: 0.0,
-                    predAlgorithmNameType: "PolyPhen",
+                    predAlgorithmNameType: "PolyPhen"
                 },
                 {
                     predictionValType: "not tolerated, low value",
                     score: 0.13,
-                    predAlgorithmNameType: "SIFT",
-                },
-            ],
+                    predAlgorithmNameType: "SIFT"
+                }
+            ]
         },
         {
             type: "VARIANT",
@@ -289,7 +286,7 @@ export const customFeatures = {
             begin: "86",
             end: "86",
             wildType: "V",
-            consequenceType: "mutation",
+            consequenceType: "mutation"
         },
         {
             type: "VARIANT",
@@ -302,14 +299,14 @@ export const customFeatures = {
                 {
                     predictionValType: "unknown",
                     score: 0.0,
-                    predAlgorithmNameType: "PolyPhen",
+                    predAlgorithmNameType: "PolyPhen"
                 },
                 {
                     predictionValType: "deleterious",
                     score: 0.04,
-                    predAlgorithmNameType: "SIFT",
-                },
-            ],
+                    predAlgorithmNameType: "SIFT"
+                }
+            ]
         },
         {
             type: "VARIANT",
@@ -322,14 +319,14 @@ export const customFeatures = {
                 {
                     predictionValType: "benign",
                     score: 0.11111,
-                    predAlgorithmNameType: "PolyPhen",
+                    predAlgorithmNameType: "PolyPhen"
                 },
                 {
                     predictionValType: "tolerated",
                     score: 0.99999,
-                    predAlgorithmNameType: "SIFT",
-                },
-            ],
+                    predAlgorithmNameType: "SIFT"
+                }
+            ]
         },
         {
             type: "VARIANT",
@@ -338,7 +335,7 @@ export const customFeatures = {
             begin: "17",
             end: "17",
             wildType: "A",
-            consequenceType: "missense",
+            consequenceType: "missense"
         },
         {
             type: "VARIANT",
@@ -351,20 +348,19 @@ export const customFeatures = {
                 {
                     predictionValType: "deleterious",
                     score: 0.98,
-                    predAlgorithmNameType: "PolyPhen",
+                    predAlgorithmNameType: "PolyPhen"
                 },
                 {
                     predictionValType: "tolerated",
                     score: 0.89,
-                    predAlgorithmNameType: "SIFT",
-                },
-            ],
+                    predAlgorithmNameType: "SIFT"
+                }
+            ]
         },
         {
             type: "VARIANT",
             category: "VARIATION",
-            description: "same UP mutation, additional ftid",
-            ftId: "XYZ_010109",
+            description: "same UP mutation",
             alternativeSequence: "P",
             begin: "723",
             end: "723",
@@ -373,14 +369,14 @@ export const customFeatures = {
                 {
                     predictionValType: "looking bad",
                     score: 0.0301,
-                    predAlgorithmNameType: "PolyPhen",
+                    predAlgorithmNameType: "PolyPhen"
                 },
                 {
                     predictionValType: "tolerated",
                     score: 0.67,
-                    predAlgorithmNameType: "SIFT",
-                },
-            ],
+                    predAlgorithmNameType: "SIFT"
+                }
+            ]
         },
         {
             type: "VARIANT",
@@ -389,7 +385,7 @@ export const customFeatures = {
             begin: "717",
             end: "717",
             wildType: "V",
-            consequenceType: "missense",
+            consequenceType: "missense"
         },
         {
             type: "VARIANT",
@@ -397,7 +393,7 @@ export const customFeatures = {
             alternativeSequence: "G",
             begin: "737",
             end: "737",
-            wildType: "V",
-        },
-    ],
+            wildType: "V"
+        }
+    ]
 };

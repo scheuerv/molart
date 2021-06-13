@@ -1,8 +1,8 @@
 import { Highlight } from "uniprot-nightingale/src/manager/track-manager";
 import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
 import { StructureElement, StructureProperties } from "Molstar/mol-model/structure";
-import { FragmentMapping, Mapping } from "uniprot-nightingale/src/parsers/track-parser";
 import { getStructureElementLoci } from "./molstar-utils";
+import { FragmentMapping, Mapping } from "uniprot-nightingale/src/types/mapping";
 
 export interface AuthSeqIdExtractor {
     extractAuthSeqId(e: Canvas3D.HoverEvent): number | undefined;

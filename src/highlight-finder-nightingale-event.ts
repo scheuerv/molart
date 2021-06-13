@@ -1,4 +1,5 @@
-import { FragmentMapping, Mapping } from "uniprot-nightingale/src/parsers/track-parser";
+import { FragmentMapping, Mapping } from "uniprot-nightingale/src/types/mapping";
+
 export default class HighlightFinderNightingaleEvent {
     public calculate(resNum: number, structureMapping: Mapping): number | undefined {
         const fragmentMapping = this.getFragmentMapping(resNum, structureMapping);

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Mapping } from "uniprot-nightingale/src/parsers/track-parser";
+import { Mapping } from "uniprot-nightingale/src/types/mapping";
 import HighlightFinderNightingaleEvent from "../src/highlight-finder-nightingale-event";
 
 describe("HighlightFinderNightingaleEvent tests", function () {

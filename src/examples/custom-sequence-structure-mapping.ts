@@ -15,7 +15,7 @@ export const sequenceStructureMapping = [
         structure: {
             format: "mmcif", //valid parameters are PDB and mmcif
             data: data //window.uig_a, //the structure in the PDB or mmcif format
-            //uri: "https://www.ebi.ac.uk/pdbe/static/entry/5uig_updated.cif", 
+            //uri: "https://www.ebi.ac.uk/pdbe/static/entry/5uig_updated.cif",
         },
         start: 27, // where the structure begins with respect to the full molecule sequence
         end: 438, // where the structure ends with respect to the full molecule sequence

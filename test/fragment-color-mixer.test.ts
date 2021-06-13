@@ -193,7 +193,7 @@ describe("FragmentColorMixer tests", function () {
                 color: "#0000FF"
             }
         ];
-        expect(mixFragmentColors(trackFragments1)[0].color).to.not.deep.equals(
+        expect(mixFragmentColors(trackFragments1)[0].color).to.not.equals(
             mixFragmentColors(trackFragments2)[0].color
         );
     });
