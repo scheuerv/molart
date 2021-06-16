@@ -4,9 +4,6 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const sharedConfig = {
   mode: 'development',
-  devServer: {
-    port: 1341
-  },
   module: {
     rules: [
       {
@@ -93,10 +90,38 @@ function createEntryPoint(name) {
     externals: {
       "fs": 'require("fs")'
     },
+    devServer: {
+      port: 1341
+    },
+    ignoreWarnings: [
+      {
+        module: /bootstrap-multiselect\.js\?/,
+      },
+      (warning) => true,
+    ],
+    ...sharedConfig
+  }
+}
+function createExampleEntryPoint(name) {
+  return {
+    devtool: "inline-source-map",
+    entry: [path.resolve(__dirname, `src/examples/custom-sequence-structure-mapping.ts`)],
+    output: {
+      filename: `${name}.js`,
+      path: path.resolve(__dirname, `dist/`),
+      library: {
+        type: 'assign',
+        name: 'TypedMolartExamples'
+      }
+    },
+    externals: {
+      "fs": 'require("fs")'
+    },
     ...sharedConfig
   }
 }
 
 module.exports = [
-  createEntryPoint("index")
+  createEntryPoint("index"),
+  createExampleEntryPoint("example")
 ]

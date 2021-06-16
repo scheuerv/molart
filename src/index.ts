@@ -20,7 +20,7 @@ import { Config as SequenceConfig, Highlight } from "uniprot-nightingale/src/man
 import { mixFragmentColors } from "./fragment-color-mixer";
 import $ from "jquery";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import "bootstrap";
 import "bootstrap-multiselect";
 import "bootstrap-multiselect/dist/css/bootstrap-multiselect.css";
 import HighlightFinderMolstarEvent, {
