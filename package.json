@@ -19,7 +19,7 @@
         "bootstrap": "^4.6.0",
         "bootstrap-multiselect": "^0.9.15",
         "color-blend": "^3.0.1",
-        "d3": "^5.16.0",
+        "d3": "5.16.0",
         "http-server": "^0.12.3",
         "knockout": "^3.5.1",
         "molstar": "^2.0.6",
