@@ -7,7 +7,7 @@ import "bootstrap-multiselect/dist/css/bootstrap-multiselect.css";
 import { StructureRepresentationBuiltInProps } from "Molstar/mol-plugin-state/helpers/structure-representation-params";
 import { createEmitter } from "ts-typed-events";
 require("Molstar/mol-plugin-ui/skin/light.scss");
-require("./main.scss");
+require("./main.css");
 import { Mapping } from "uniprot-nightingale/src/types/mapping";
 import MolstarPlugin from "./molstar-plugin";
 import { Residue } from "./types/residue";
