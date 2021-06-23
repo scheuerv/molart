@@ -9,8 +9,8 @@
         "watch-webpack": "webpack -w --mode development",
         "start": "webpack serve",
         "test": "jest --no-cache",
-        "lint": "eslint . --ext .ts",
-        "lint-fix": "eslint . --ext .ts --fix"
+        "lint": "eslint . --ext .html,.ts",
+        "lint-fix": "eslint . --ext .html,.ts --fix"
     },
     "keywords": [],
     "license": "Apache-2.0",
@@ -22,7 +22,7 @@
         "d3": "5.16.0",
         "http-server": "^0.12.3",
         "knockout": "^3.5.1",
-        "molstar": "^2.0.6",
+        "molstar": "^2.0.7",
         "popper.js": "^1.16.1",
         "ts-typed-events": "^3.0.0",
         "uniprot-nightingale": "git://github.com/scheuerv/uniprot-nightingale.git"

@@ -56,11 +56,11 @@ export default class MolstarPlugin {
 
     private readonly highlightFinderNightingaleEvent: HighlightFinderNightingaleEvent =
         new HighlightFinderNightingaleEvent();
-    private readonly slider: HTMLInputElement = $("<input/>").attr("type", "range")
+    private readonly slider: HTMLInputElement = $("<input/>")
+        .attr("type", "range")
         .attr("min", 1)
         .attr("max", 100)
         .attr("value", 50)[0] as HTMLInputElement;
-
 
     private structure: StateObjectSelector;
 
@@ -77,15 +77,15 @@ export default class MolstarPlugin {
                 }
             }
         );
-        this.target.append($("<div/>")
-            .addClass("transparency-slider")
-            .append(this.slider)[0]);
+        this.target.append($("<div/>").addClass("transparency-slider").append(this.slider)[0]);
         this.slider.addEventListener("change", () => {
             this.setTransparency(this.slider.value);
         });
 
-        $("<div/>").addClass("structure-viewer-header").append($("<i/>").addClass("fas fa-download fa-2x")).prependTo(this.target)
-
+        $("<div/>")
+            .addClass("structure-viewer-header")
+            .append($("<i/>").addClass("fas fa-download fa-2x"))
+            .prependTo(this.target);
 
         this.plugin.canvas3d?.interaction.hover.subscribe((e: Canvas3D.HoverEvent) => {
             const structureElementLoci = getStructureElementLoci(e.current.loci);
@@ -159,21 +159,20 @@ export default class MolstarPlugin {
         const extraHiglights = config.extrahighlights;
         const extraHiglightsSelectors: ExtraHiglight[] = [];
         if (extraHiglights && extraHiglights.length > 0) {
-            const previousSelect = $(this.target)
-                .find(".structure-viewer-header select")[0];
+            const previousSelect = $(this.target).find(".structure-viewer-header select")[0];
             console.log("prev sel " + previousSelect);
             console.log("target " + this.target);
 
             if (previousSelect) {
                 $(previousSelect.parentNode!).remove();
             }
-            select = $("<select/>").attr("name", "highlights")
-                .attr("multiple", "multiple")[0] as HTMLSelectElement
+            select = $("<select/>")
+                .attr("name", "highlights")
+                .attr("multiple", "multiple")[0] as HTMLSelectElement;
 
             $(this.target)
                 .find(".structure-viewer-header")
-                .prepend($("<div/>").css("display", "inline-block").append(select))
-                ;
+                .prepend($("<div/>").css("display", "inline-block").append(select));
             console.log("sel " + select);
             console.log("target " + this.target);
             console.log("$target " + $(this.target)[0]);
@@ -181,11 +180,12 @@ export default class MolstarPlugin {
         }
         for (const key in extraHiglights) {
             const extraHighlight = extraHiglights[parseInt(key)];
-            $(select!)
-                .append($("<option/>").attr("value", key)
+            $(select!).append(
+                $("<option/>")
+                    .attr("value", key)
                     .attr("selected", "selected")
-                    .text(extraHighlight.label))
-                ;
+                    .text(extraHighlight.label)
+            );
             const filter: Record<string, Expression> = {};
             if (extraHighlight.residue) {
                 filter["residue-test"] = MolScriptBuilder.core.rel.inRange([

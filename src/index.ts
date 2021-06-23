@@ -43,8 +43,8 @@ export class TypedMolArt {
                         this.previousWindowWidth &&
                         this.previousWindowWidth <= this.minWindowWidth
                     ) {
-                        $(this.target).css
-                            ("top", entry.contentBoxSize[0].blockSize + "px")
+                        $(this.target)
+                            .css("top", entry.contentBoxSize[0].blockSize + "px")
                             .css("position", "absolute");
                     }
                 }
@@ -52,7 +52,6 @@ export class TypedMolArt {
         });
         resizeObserver.observe(this.protvistaWrapper);
         this.plugin = new MolstarPlugin(target);
-
 
         this.loadConfig(config);
         this.plugin.onStructureLoaded.on(() => {
@@ -169,12 +168,12 @@ export class TypedMolArt {
         this.trackManager?.setHighlights(
             this.mouseOverHighlightedResidueInSequence
                 ? [
-                    higlight,
-                    {
-                        start: this.mouseOverHighlightedResidueInSequence,
-                        end: this.mouseOverHighlightedResidueInSequence
-                    }
-                ]
+                      higlight,
+                      {
+                          start: this.mouseOverHighlightedResidueInSequence,
+                          end: this.mouseOverHighlightedResidueInSequence
+                      }
+                  ]
                 : [higlight]
         );
     }

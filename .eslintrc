@@ -4,12 +4,13 @@
     "parserOptions": {
         "ecmaVersion": 2020
     },
-    "plugins": ["@typescript-eslint"],
+    "plugins": ["@typescript-eslint","eslint-plugin-html"],
     "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:prettier/recommended"
     ],
-    "rules": {}
+    "rules": {},
+    "ignorePatterns": ["coverage/**"]
 }
