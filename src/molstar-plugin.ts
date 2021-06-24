@@ -63,6 +63,7 @@ export default class MolstarPlugin {
         .attr("value", 50)[0] as HTMLInputElement;
 
     private structure: StateObjectSelector;
+    private notMappedMolecularSurfaceRepresentation?: StateObjectSelector;
 
     constructor(private readonly target: HTMLElement) {
         this.plugin = createPlugin(
@@ -257,10 +258,52 @@ export default class MolstarPlugin {
                 });
             }
         }
-        const polymer = await this.plugin.builders.structure.tryCreateComponentStatic(
+        const loaded = await this.createRepresentations();
+        this.setTransparency(this.slider?.value);
+        this.overpaintFragments(markedFragments);
+        if (loaded) {
+            this.emitOnStructureLoaded.emit();
+        }
+    }
+    private async createRepresentations() {
+        const mappedExpression = MolScriptBuilder.core.logic.or(
+            this.structureMapping.map((fragment) => {
+                return MolScriptBuilder.core.rel.inRange([
+                    MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id(),
+                    fragment.start.residue_number,
+                    fragment.end.residue_number
+                ]);
+            })
+        );
+        const polymer = await this.plugin.builders.structure.tryCreateComponentFromExpression(
             this.structure,
+            MolScriptBuilder.struct.generator.atomGroups({ "residue-test": mappedExpression }),
             "polymer"
         );
+        const notMappedComponent =
+            await this.plugin.builders.structure.tryCreateComponentFromExpression(
+                this.structure,
+                MolScriptBuilder.struct.generator.atomGroups({
+                    "residue-test": MolScriptBuilder.core.logic.not([mappedExpression])
+                }),
+                "not mapped"
+            );
+        await this.plugin.builders.structure.representation.addRepresentation(notMappedComponent!, {
+            type: "cartoon",
+            typeParams: { alpha: 1 },
+            color: "uniform",
+            colorParams: { value: 0x666666 },
+            size: "uniform"
+        });
+        this.notMappedMolecularSurfaceRepresentation =
+            await this.plugin.builders.structure.representation.addRepresentation(
+                notMappedComponent!,
+                {
+                    type: "molecular-surface",
+                    typeParams: { alpha: 1 },
+                    color: "uniform"
+                }
+            );
         const ligand = await this.plugin.builders.structure.tryCreateComponentStatic(
             this.structure,
             "ligand"
@@ -273,60 +316,6 @@ export default class MolstarPlugin {
             this.structure,
             "water"
         );
-        if (polymer) {
-            this.cartoonRepr =
-                await this.plugin.builders.structure.representation.addRepresentation(polymer, {
-                    type: "cartoon",
-                    color: "chain-id"
-                });
-            this.molecularSurfaceRepr =
-                await this.plugin.builders.structure.representation.addRepresentation(polymer, {
-                    type: "molecular-surface",
-                    typeParams: { alpha: 1 },
-                    color: "uniform"
-                });
-            this.setTransparency(this.slider?.value);
-            this.overpaintFragments(markedFragments);
-            const data =
-                this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
-            if (data) {
-                const filter: Record<string, Expression> = {
-                    "residue-test": MolScriptBuilder.core.logic.not([
-                        MolScriptBuilder.core.logic.or(
-                            this.structureMapping.map((fragment) => {
-                                return MolScriptBuilder.core.rel.inRange([
-                                    MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id(),
-                                    fragment.start.residue_number,
-                                    fragment.end.residue_number
-                                ]);
-                            })
-                        )
-                    ])
-                };
-                const selection = Script.getStructureSelection(
-                    MolScriptBuilder.struct.generator.atomGroups(filter),
-                    data
-                );
-                const bundle = Bundle.fromSelection(selection);
-                const update = this.plugin.build();
-                update
-                    .to(this.cartoonRepr)
-                    .apply(
-                        StateTransforms.Representation.OverpaintStructureRepresentation3DFromBundle,
-                        {
-                            layers: [
-                                {
-                                    bundle: bundle,
-                                    color: Color(0x555555),
-                                    clear: false
-                                }
-                            ]
-                        }
-                    );
-                update.commit();
-            }
-            this.emitOnStructureLoaded.emit();
-        }
         if (ligand) {
             await this.plugin.builders.structure.representation.addRepresentation(ligand, {
                 type: "ball-and-stick",
@@ -344,6 +333,20 @@ export default class MolstarPlugin {
                 type: "ball-and-stick",
                 color: "element-symbol"
             });
+        }
+        if (polymer) {
+            this.cartoonRepr =
+                await this.plugin.builders.structure.representation.addRepresentation(polymer, {
+                    type: "cartoon",
+                    color: "chain-id"
+                });
+            this.molecularSurfaceRepr =
+                await this.plugin.builders.structure.representation.addRepresentation(polymer, {
+                    type: "molecular-surface",
+                    typeParams: { alpha: 1 },
+                    color: "uniform"
+                });
+            return true;
         }
     }
 
@@ -529,12 +532,23 @@ export default class MolstarPlugin {
     }
 
     private setTransparency(value?: string) {
-        if (!this.molecularSurfaceRepr || !this.molecularSurfaceRepr.obj || value === undefined)
-            return;
+        if (value === undefined) return;
         const parsedValue = parseFloat(value) / 100;
+        this.updateRepresentationTransparency(parsedValue, this.molecularSurfaceRepr);
+        this.updateRepresentationTransparency(
+            parsedValue,
+            this.notMappedMolecularSurfaceRepresentation
+        );
+        $(this.slider).attr("title", `Surface transparency:  ${parsedValue * 100}%`);
+    }
+    private updateRepresentationTransparency(
+        transparencyValue: number,
+        representation?: StateObjectSelector
+    ) {
+        if (!representation || !representation.obj) return;
         const update = this.plugin.build();
 
-        const structure = this.molecularSurfaceRepr.obj.data.sourceData;
+        const structure = representation.obj.data.sourceData;
 
         const loci = StructureLoci.all(structure.root);
         if (StructureLoci.isEmpty(loci)) {
@@ -543,16 +557,15 @@ export default class MolstarPlugin {
 
         const layer = {
             bundle: StructureElement.Bundle.fromLoci(loci),
-            value: 1 - parsedValue
+            value: 1 - transparencyValue
         };
 
         update
-            .to(this.molecularSurfaceRepr)
+            .to(representation)
             .apply(StateTransforms.Representation.TransparencyStructureRepresentation3DFromBundle, {
                 layers: [layer]
             });
 
         update.commit();
-        $(this.slider).attr("title", `Surface transparency:  ${parsedValue * 100}%`);
     }
 }
