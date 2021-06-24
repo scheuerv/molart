@@ -1,4 +1,4 @@
-#app {
+#ma-structure-wrapper {
     vertical-align: top;
     left: 50%;
     display: inline-block;
@@ -7,7 +7,7 @@
     top: 0;
 }
 
-#pv-pdb {
+#ma-sequence-wrapper {
     vertical-align: top;
     left: 0;
     display: inline-block;
@@ -21,18 +21,18 @@
     padding: 0;
     box-sizing: border-box;
 }
-.transparency-slider {
+.ma-transparency-slider {
     width: calc(100% - 6px);
     margin-left: 3px;
     margin-top: calc(100vh - 25px - 40px);
     position: relative;
 }
-.transparency-slider input {
+.ma-transparency-slider input {
     width: 100%;
     position: relative;
 }
 
-.structure-viewer-wrapper {
+.ma-structure-viewer-wrapper {
     height: calc(100% - 40px);
     width: 100%;
     position: absolute;
@@ -43,6 +43,6 @@ i.fas.fa-download {
     float: right;
 }
 
-.structure-viewer-header {
+.ma-structure-viewer-header {
     height: 40px;
 }

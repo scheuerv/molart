@@ -67,7 +67,7 @@ export default class MolstarPlugin {
 
     constructor(private readonly target: HTMLElement) {
         this.plugin = createPlugin(
-            $("<div/>").addClass("structure-viewer-wrapper").appendTo(target)[0],
+            $("<div/>").addClass("ma-structure-viewer-wrapper").appendTo(target)[0],
             {
                 ...DefaultPluginUISpec(),
                 layout: {
@@ -78,13 +78,13 @@ export default class MolstarPlugin {
                 }
             }
         );
-        this.target.append($("<div/>").addClass("transparency-slider").append(this.slider)[0]);
+        this.target.append($("<div/>").addClass("ma-transparency-slider").append(this.slider)[0]);
         this.slider.addEventListener("change", () => {
             this.setTransparency(this.slider.value);
         });
 
         $("<div/>")
-            .addClass("structure-viewer-header")
+            .addClass("ma-structure-viewer-header")
             .append($("<i/>").addClass("fas fa-download fa-2x"))
             .prependTo(this.target);
 
@@ -160,7 +160,7 @@ export default class MolstarPlugin {
         const extraHighlights = config.extrahighlights;
         const extraHiglightsSelectors: ExtraHiglight[] = [];
         if (extraHighlights && extraHighlights.length > 0) {
-            const previousSelect = $(this.target).find(".structure-viewer-header select")[0];
+            const previousSelect = $(this.target).find(".ma-structure-viewer-header select")[0];
             console.log("prev sel " + previousSelect);
             console.log("target " + this.target);
 
@@ -172,12 +172,12 @@ export default class MolstarPlugin {
                 .attr("multiple", "multiple")[0] as HTMLSelectElement;
 
             $(this.target)
-                .find(".structure-viewer-header")
+                .find(".ma-structure-viewer-header")
                 .prepend($("<div/>").css("display", "inline-block").append(select));
             console.log("sel " + select);
             console.log("target " + this.target);
             console.log("$target " + $(this.target)[0]);
-            console.log("$target.find " + $(this.target).find(".structure-viewer-header")[0]);
+            console.log("$target.find " + $(this.target).find(".ma-structure-viewer-header")[0]);
         }
         for (const key in extraHighlights) {
             const extraHighlight = extraHighlights[parseInt(key)];

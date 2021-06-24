@@ -19,11 +19,14 @@
         <script type="text/javascript" src="./example.js"></script>
     </head>
     <body>
-        <div id="pv-pdb"></div>
-        <div id="app"></div>
+        <div id="ma-sequence-wrapper"></div>
+        <div id="ma-structure-wrapper"></div>
 
         <script>
-            TypedMolArt.init(document.getElementById("app"), document.getElementById("pv-pdb"));
+            TypedMolArt.init(
+                document.getElementById("ma-structure-wrapper"),
+                document.getElementById("ma-sequence-wrapper")
+            );
         </script>
     </body>
 </html>
