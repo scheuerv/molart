@@ -1,41 +1,43 @@
 import { FragmentMapping, Mapping } from "uniprot-nightingale/src/types/mapping";
 
 export default class HighlightFinderNightingaleEvent {
-    public calculate(resNum: number, structureMapping: Mapping): number | undefined {
-        const fragmentMapping = this.getFragmentMapping(resNum, structureMapping);
+    public calculate(sequenceResidueNumber: number, structureMapping: Mapping): number | undefined {
+        const fragmentMapping = this.getFragmentMapping(sequenceResidueNumber, structureMapping);
         if (fragmentMapping) {
-            let position: number = resNum;
-            if (structureMapping.uniprotStart != fragmentMapping.pdbStart) {
-                position += fragmentMapping.pdbStart - fragmentMapping.from;
-            }
-            if (position >= fragmentMapping.pdbStart && position <= fragmentMapping.pdbEnd) {
-                return position;
-            }
+            return (
+                sequenceResidueNumber +
+                fragmentMapping.start.residue_number -
+                fragmentMapping.unp_start
+            );
         }
         return undefined;
     }
 
     public getStructurePositionOfLastResidueInFragment(
-        resNum: number,
+        sequenceResidueNumber: number,
         structureMapping: Mapping
     ): number | undefined {
-        return this.getFragmentMapping(resNum, structureMapping)?.pdbEnd;
+        return this.getFragmentMapping(sequenceResidueNumber, structureMapping)?.end.residue_number;
     }
 
     public getStructurePositionOfFirstResidueInFragment(
-        resNum: number,
+        sequenceResidueNumber: number,
         structureMapping: Mapping
     ): number | undefined {
-        return this.getFragmentMapping(resNum, structureMapping)?.pdbStart;
+        return this.getFragmentMapping(sequenceResidueNumber, structureMapping)?.start
+            .residue_number;
     }
 
     private getFragmentMapping(
-        resNum: number,
+        sequenceResidueNumber: number,
         structureMapping: Mapping
     ): FragmentMapping | undefined {
-        for (let i = 0; i < structureMapping.fragmentMappings.length; i++) {
-            const fragmentMapping = structureMapping.fragmentMappings[i];
-            if (fragmentMapping.from <= resNum && fragmentMapping.to >= resNum) {
+        for (let i = 0; i < structureMapping.length; i++) {
+            const fragmentMapping = structureMapping[i];
+            if (
+                fragmentMapping.unp_start <= sequenceResidueNumber &&
+                fragmentMapping.unp_end >= sequenceResidueNumber
+            ) {
                 return fragmentMapping;
             }
         }

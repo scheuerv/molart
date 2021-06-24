@@ -1,8 +1,7 @@
-import { expect } from "chai";
 import { mixFragmentColors } from "../src/fragment-color-mixer";
 describe("FragmentColorMixer tests", function () {
     it("no fragments", async () => {
-        expect(mixFragmentColors([])).to.deep.equals([]);
+        expect(mixFragmentColors([])).toEqual([]);
     });
 
     it("two non overlapping fragments", async () => {
@@ -30,7 +29,7 @@ describe("FragmentColorMixer tests", function () {
                 color: "#FFFFFF"
             }
         ];
-        expect(mixFragmentColors(trackFragments)).to.deep.equals(expectedResult);
+        expect(mixFragmentColors(trackFragments)).toEqual(expectedResult);
     });
 
     it("two partially overlapping fragments", async () => {
@@ -63,7 +62,7 @@ describe("FragmentColorMixer tests", function () {
                 color: "#00FF00"
             }
         ];
-        expect(mixFragmentColors(trackFragments)).to.deep.equals(expectedResult);
+        expect(mixFragmentColors(trackFragments)).toEqual(expectedResult);
     });
     it("two partially overlapping fragments, same color", async () => {
         const trackFragments = [
@@ -95,7 +94,7 @@ describe("FragmentColorMixer tests", function () {
                 color: "#FF0000"
             }
         ];
-        expect(mixFragmentColors(trackFragments)).to.deep.equals(expectedResult);
+        expect(mixFragmentColors(trackFragments)).toEqual(expectedResult);
     });
 
     it("three partially overlapping fragments", async () => {
@@ -143,7 +142,7 @@ describe("FragmentColorMixer tests", function () {
                 color: "#00FF00"
             }
         ];
-        expect(mixFragmentColors(trackFragments)).to.deep.equals(expectedResult);
+        expect(mixFragmentColors(trackFragments)).toEqual(expectedResult);
     });
     it("invalid color", async () => {
         const trackFragments = [
@@ -160,7 +159,7 @@ describe("FragmentColorMixer tests", function () {
                 color: "#000000"
             }
         ];
-        expect(mixFragmentColors(trackFragments)).to.deep.equals(expectedResult);
+        expect(mixFragmentColors(trackFragments)).toEqual(expectedResult);
     });
 
     it("tests if mixing includes all fragments", async () => {
@@ -193,7 +192,7 @@ describe("FragmentColorMixer tests", function () {
                 color: "#0000FF"
             }
         ];
-        expect(mixFragmentColors(trackFragments1)[0].color).to.not.equals(
+        expect(mixFragmentColors(trackFragments1)[0].color).not.toEqual(
             mixFragmentColors(trackFragments2)[0].color
         );
     });

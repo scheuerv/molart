@@ -1,4 +1,3 @@
-import { expect } from "chai";
 import { Mapping } from "uniprot-nightingale/src/types/mapping";
 import HighlightFinderNightingaleEvent from "../src/highlight-finder-nightingale-event";
 
@@ -11,227 +10,267 @@ describe("HighlightFinderNightingaleEvent tests", function () {
 
     describe("calculate test", function () {
         it("fragment covers whole sequence, no difference between sequence - structure position", async () => {
-            const mapping = {
-                uniprotStart: 0,
-                uniprotEnd: 140,
-                fragmentMappings: [
-                    {
-                        pdbEnd: 140,
-                        pdbStart: 0,
-                        from: 0,
-                        to: 140
+            const mapping: Mapping = [
+                {
+                    unp_start: 0,
+                    unp_end: 140,
+                    start: {
+                        residue_number: 0
+                    },
+                    end: {
+                        residue_number: 140
                     }
-                ]
-            };
-            expect(instance.calculate(5, mapping)).to.equals(5);
+                }
+            ];
+            expect(instance.calculate(5, mapping)).toEqual(5);
         });
 
         it("position outside of fragments", async () => {
-            const mapping = {
-                uniprotStart: 0,
-                uniprotEnd: 140,
-                fragmentMappings: [
-                    {
-                        pdbEnd: 140,
-                        pdbStart: 90,
-                        from: 90,
-                        to: 140
+            const mapping: Mapping = [
+                {
+                    start: {
+                        residue_number: 90
                     },
-                    {
-                        pdbEnd: 20,
-                        pdbStart: 10,
-                        from: 10,
-                        to: 20
-                    }
-                ]
-            };
-            expect(instance.calculate(50, mapping)).to.undefined;
+                    end: {
+                        residue_number: 140
+                    },
+                    unp_start: 90,
+                    unp_end: 140
+                },
+                {
+                    start: {
+                        residue_number: 10
+                    },
+                    end: {
+                        residue_number: 20
+                    },
+                    unp_start: 10,
+                    unp_end: 20
+                }
+            ];
+            expect(instance.calculate(50, mapping)).toBeUndefined;
         });
 
         it("position outside of sequence", async () => {
-            const mapping = {
-                uniprotStart: 0,
-                uniprotEnd: 140,
-                fragmentMappings: [
-                    {
-                        pdbEnd: 140,
-                        pdbStart: 90,
-                        from: 90,
-                        to: 140
+            const mapping: Mapping = [
+                {
+                    start: {
+                        residue_number: 90
                     },
-                    {
-                        pdbEnd: 20,
-                        pdbStart: 10,
-                        from: 10,
-                        to: 20
-                    }
-                ]
-            };
-            expect(instance.calculate(180, mapping)).to.undefined;
+                    end: {
+                        residue_number: 140
+                    },
+                    unp_start: 90,
+                    unp_end: 140
+                },
+                {
+                    start: {
+                        residue_number: 10
+                    },
+                    end: {
+                        residue_number: 20
+                    },
+                    unp_start: 10,
+                    unp_end: 20
+                }
+            ];
+            expect(instance.calculate(180, mapping)).toBeUndefined;
         });
 
         it("no fragment mappings", async () => {
-            const mapping = {
-                uniprotStart: 0,
-                uniprotEnd: 140,
-                fragmentMappings: []
-            };
-            expect(instance.calculate(5, mapping)).to.undefined;
+            const mapping: Mapping = [];
+            expect(instance.calculate(5, mapping)).toBeUndefined;
         });
 
         it("difference between sequence - structure position, two fragments, position in first fragment", async () => {
-            const mapping = {
-                uniprotStart: 10,
-                uniprotEnd: 42,
-                fragmentMappings: [
-                    { pdbStart: 372, pdbEnd: 373, from: 10, to: 11 },
-                    { pdbStart: 382, pdbEnd: 404, from: 20, to: 42 }
-                ]
-            };
-            expect(instance.calculate(11, mapping)).to.equals(373);
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 372 },
+                    end: { residue_number: 373 },
+                    unp_start: 10,
+                    unp_end: 11
+                },
+                {
+                    start: { residue_number: 382 },
+                    end: { residue_number: 404 },
+                    unp_start: 20,
+                    unp_end: 42
+                }
+            ];
+            expect(instance.calculate(11, mapping)).toEqual(373);
+        });
+
+        it("difference between sequence - structure position, two fragments, position in first fragment, structure numbers lower than sequence", async () => {
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 10 },
+                    end: { residue_number: 11 },
+                    unp_start: 372,
+                    unp_end: 373
+                },
+                {
+                    start: { residue_number: 10 },
+                    end: { residue_number: 42 },
+                    unp_start: 382,
+                    unp_end: 404
+                }
+            ];
+            expect(instance.calculate(373, mapping)).toEqual(11);
         });
 
         it("difference between sequence - structure position, two fragments, position in second fragment", async () => {
-            const mapping = {
-                uniprotStart: 10,
-                uniprotEnd: 42,
-                fragmentMappings: [
-                    { pdbStart: 372, pdbEnd: 373, from: 10, to: 11 },
-                    { pdbStart: 382, pdbEnd: 404, from: 20, to: 42 }
-                ]
-            };
-            expect(instance.calculate(23, mapping)).to.equals(385);
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 372 },
+                    end: { residue_number: 373 },
+                    unp_start: 10,
+                    unp_end: 11
+                },
+                {
+                    start: { residue_number: 382 },
+                    end: { residue_number: 404 },
+                    unp_start: 20,
+                    unp_end: 42
+                }
+            ];
+            expect(instance.calculate(23, mapping)).toEqual(385);
         });
 
         it("pdbId 2dnc test", async () => {
-            const mapping: Mapping = {
-                uniprotStart: 57,
-                uniprotEnd: 141,
-                fragmentMappings: [{ pdbStart: 8, pdbEnd: 92, from: 57, to: 141 }]
-            };
-            expect(instance.calculate(60, mapping)).to.equal(11);
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 8 },
+                    end: { residue_number: 92 },
+                    unp_start: 57,
+                    unp_end: 141
+                }
+            ];
+            expect(instance.calculate(60, mapping)).toEqual(11);
         });
     });
 
     describe("getStructurePositionOfLastResidueInFragment test", function () {
         it("one fragment, position inside", async () => {
-            const mapping: Mapping = {
-                uniprotStart: 0,
-                uniprotEnd: 140,
-                fragmentMappings: [
-                    {
-                        pdbEnd: 90,
-                        pdbStart: 50,
-                        from: 50,
-                        to: 90
-                    }
-                ]
-            };
-            expect(instance.getStructurePositionOfLastResidueInFragment(55, mapping)).to.equals(90);
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 50 },
+                    end: { residue_number: 90 },
+                    unp_start: 50,
+                    unp_end: 90
+                }
+            ];
+            expect(instance.getStructurePositionOfLastResidueInFragment(55, mapping)).toEqual(90);
         });
 
         it("one fragment, position outside", async () => {
-            const mapping: Mapping = {
-                uniprotStart: 0,
-                uniprotEnd: 140,
-                fragmentMappings: [
-                    {
-                        pdbEnd: 90,
-                        pdbStart: 50,
-                        from: 50,
-                        to: 90
-                    }
-                ]
-            };
-            expect(instance.getStructurePositionOfLastResidueInFragment(40, mapping)).to.undefined;
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 50 },
+                    end: { residue_number: 90 },
+                    unp_start: 50,
+                    unp_end: 90
+                }
+            ];
+            expect(instance.getStructurePositionOfLastResidueInFragment(40, mapping)).toBeUndefined;
         });
 
         it("two fragments, position in first", async () => {
-            const mapping: Mapping = {
-                uniprotStart: 10,
-                uniprotEnd: 42,
-                fragmentMappings: [
-                    { pdbStart: 372, pdbEnd: 373, from: 10, to: 11 },
-                    { pdbStart: 382, pdbEnd: 404, from: 20, to: 42 }
-                ]
-            };
-            expect(instance.getStructurePositionOfLastResidueInFragment(10, mapping)).to.equal(373);
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 372 },
+                    end: { residue_number: 373 },
+                    unp_start: 10,
+                    unp_end: 11
+                },
+                {
+                    start: { residue_number: 382 },
+                    end: { residue_number: 404 },
+                    unp_start: 20,
+                    unp_end: 42
+                }
+            ];
+            expect(instance.getStructurePositionOfLastResidueInFragment(10, mapping)).toEqual(373);
         });
 
         it("two fragments, position in second", async () => {
-            const mapping: Mapping = {
-                uniprotStart: 10,
-                uniprotEnd: 42,
-                fragmentMappings: [
-                    { pdbStart: 372, pdbEnd: 373, from: 10, to: 11 },
-                    { pdbStart: 382, pdbEnd: 404, from: 20, to: 42 }
-                ]
-            };
-            expect(instance.getStructurePositionOfLastResidueInFragment(30, mapping)).to.equal(404);
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 372 },
+                    end: { residue_number: 373 },
+                    unp_start: 10,
+                    unp_end: 11
+                },
+                {
+                    start: { residue_number: 382 },
+                    end: { residue_number: 404 },
+                    unp_start: 20,
+                    unp_end: 42
+                }
+            ];
+            expect(instance.getStructurePositionOfLastResidueInFragment(30, mapping)).toEqual(404);
         });
     });
 
     describe("getStructurePositionOfFirstResidueInFragment test", function () {
         it("one fragment, position inside", async () => {
-            const mapping: Mapping = {
-                uniprotStart: 0,
-                uniprotEnd: 140,
-                fragmentMappings: [
-                    {
-                        pdbEnd: 90,
-                        pdbStart: 50,
-                        from: 50,
-                        to: 90
-                    }
-                ]
-            };
-            expect(instance.getStructurePositionOfFirstResidueInFragment(55, mapping)).to.equals(
-                50
-            );
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 50 },
+                    end: { residue_number: 90 },
+                    unp_start: 50,
+                    unp_end: 90
+                }
+            ];
+            expect(instance.getStructurePositionOfFirstResidueInFragment(55, mapping)).toEqual(50);
         });
 
         it("one fragment, position outside", async () => {
-            const mapping: Mapping = {
-                uniprotStart: 0,
-                uniprotEnd: 140,
-                fragmentMappings: [
-                    {
-                        pdbEnd: 90,
-                        pdbStart: 50,
-                        from: 50,
-                        to: 90
-                    }
-                ]
-            };
-            expect(instance.getStructurePositionOfFirstResidueInFragment(40, mapping)).to.undefined;
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 50 },
+                    end: { residue_number: 90 },
+                    unp_start: 50,
+                    unp_end: 90
+                }
+            ];
+            expect(instance.getStructurePositionOfFirstResidueInFragment(40, mapping))
+                .toBeUndefined;
         });
 
         it("two fragments, position in first", async () => {
-            const mapping: Mapping = {
-                uniprotStart: 10,
-                uniprotEnd: 42,
-                fragmentMappings: [
-                    { pdbStart: 372, pdbEnd: 373, from: 10, to: 11 },
-                    { pdbStart: 382, pdbEnd: 404, from: 20, to: 42 }
-                ]
-            };
-            expect(instance.getStructurePositionOfFirstResidueInFragment(10, mapping)).to.equal(
-                372
-            );
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 372 },
+                    end: { residue_number: 373 },
+                    unp_start: 10,
+                    unp_end: 11
+                },
+                {
+                    start: { residue_number: 382 },
+                    end: { residue_number: 404 },
+                    unp_start: 20,
+                    unp_end: 42
+                }
+            ];
+            expect(instance.getStructurePositionOfFirstResidueInFragment(10, mapping)).toEqual(372);
         });
 
         it("two fragments, position in second", async () => {
-            const mapping: Mapping = {
-                uniprotStart: 10,
-                uniprotEnd: 42,
-                fragmentMappings: [
-                    { pdbStart: 372, pdbEnd: 373, from: 10, to: 11 },
-                    { pdbStart: 382, pdbEnd: 404, from: 20, to: 42 }
-                ]
-            };
-            expect(instance.getStructurePositionOfFirstResidueInFragment(30, mapping)).to.equal(
-                382
-            );
+            const mapping: Mapping = [
+                {
+                    start: { residue_number: 372 },
+                    end: { residue_number: 373 },
+                    unp_start: 10,
+                    unp_end: 11
+                },
+                {
+                    start: { residue_number: 382 },
+                    end: { residue_number: 404 },
+                    unp_start: 20,
+                    unp_end: 42
+                }
+            ];
+            expect(instance.getStructurePositionOfFirstResidueInFragment(30, mapping)).toEqual(382);
         });
     });
 });

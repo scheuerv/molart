@@ -6,7 +6,7 @@ import { createPlugin } from "Molstar/mol-plugin-ui";
 import { DefaultPluginUISpec } from "Molstar/mol-plugin-ui/spec";
 import { createEmitter } from "ts-typed-events";
 import HighlightFinderMolstarEvent, {
-    MolstarAuthSeqIdExtractor
+    MolstarLabelSeqIdExtractor
 } from "./highlight-finder-molstar-event";
 import { getStructureElementLoci } from "./molstar-utils";
 import { StateObjectSelector } from "Molstar/mol-state";
@@ -40,7 +40,7 @@ type ExtraHiglight = {
 
 export default class MolstarPlugin {
     private readonly highlightFinderMolstarEvent: HighlightFinderMolstarEvent =
-        new HighlightFinderMolstarEvent(new MolstarAuthSeqIdExtractor());
+        new HighlightFinderMolstarEvent(new MolstarLabelSeqIdExtractor());
     private plugin: PluginContext;
     private readonly emitOnHover = createEmitter<Residue | null>();
     public readonly onHover = this.emitOnHover.event;
@@ -156,9 +156,9 @@ export default class MolstarPlugin {
                 : { name: "model", params: {} }
         );
         let select: HTMLSelectElement | undefined;
-        const extraHiglights = config.extrahighlights;
+        const extraHighlights = config.extrahighlights;
         const extraHiglightsSelectors: ExtraHiglight[] = [];
-        if (extraHiglights && extraHiglights.length > 0) {
+        if (extraHighlights && extraHighlights.length > 0) {
             const previousSelect = $(this.target).find(".structure-viewer-header select")[0];
             console.log("prev sel " + previousSelect);
             console.log("target " + this.target);
@@ -178,8 +178,8 @@ export default class MolstarPlugin {
             console.log("$target " + $(this.target)[0]);
             console.log("$target.find " + $(this.target).find(".structure-viewer-header")[0]);
         }
-        for (const key in extraHiglights) {
-            const extraHighlight = extraHiglights[parseInt(key)];
+        for (const key in extraHighlights) {
+            const extraHighlight = extraHighlights[parseInt(key)];
             $(select!).append(
                 $("<option/>")
                     .attr("value", key)
@@ -189,21 +189,21 @@ export default class MolstarPlugin {
             const filter: Record<string, Expression> = {};
             if (extraHighlight.residue) {
                 filter["residue-test"] = MolScriptBuilder.core.rel.inRange([
-                    MolScriptBuilder.struct.atomProperty.macromolecular.auth_seq_id(),
-                    extraHighlight.residue.authResidueNumFrom,
-                    extraHighlight.residue.authResidueNumTo
+                    MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id(),
+                    extraHighlight.residue.labelResidueNumFrom,
+                    extraHighlight.residue.labelResidueNumTo
                 ]);
             }
-            if (extraHighlight.authChain) {
+            if (extraHighlight.labelChain) {
                 filter["chain-test"] = MolScriptBuilder.core.set.has([
-                    MolScriptBuilder.core.type.set(extraHighlight.authChain),
-                    MolScriptBuilder.ammp("auth_asym_id")
+                    MolScriptBuilder.core.type.set(extraHighlight.labelChain),
+                    MolScriptBuilder.ammp("label_asym_id")
                 ]);
             }
-            if (extraHighlight.authAtom) {
+            if (extraHighlight.labelAtom) {
                 filter["atom-test"] = MolScriptBuilder.core.set.has([
-                    MolScriptBuilder.core.type.set(extraHighlight.authAtom),
-                    MolScriptBuilder.ammp("auth_atom_id")
+                    MolScriptBuilder.core.type.set(extraHighlight.labelAtom),
+                    MolScriptBuilder.ammp("label_atom_id")
                 ]);
             }
             const expression = MolScriptBuilder.struct.generator.atomGroups(filter);
@@ -225,7 +225,7 @@ export default class MolstarPlugin {
                 extraHighlight.props
             );
         }
-        if (extraHiglights && extraHiglights.length > 0) {
+        if (extraHighlights && extraHighlights.length > 0) {
             if (select) {
                 $(select).multiselect({
                     buttonClass: "custom-select"
@@ -292,19 +292,15 @@ export default class MolstarPlugin {
             if (data) {
                 const filter: Record<string, Expression> = {
                     "residue-test": MolScriptBuilder.core.logic.not([
-                        MolScriptBuilder.core.rel.inRange([
-                            MolScriptBuilder.struct.atomProperty.macromolecular.auth_seq_id(),
-                            Math.min(
-                                ...this.structureMapping.fragmentMappings.map((fragment) => {
-                                    return fragment.pdbStart;
-                                })
-                            ),
-                            Math.max(
-                                ...this.structureMapping.fragmentMappings.map((fragment) => {
-                                    return fragment.pdbEnd;
-                                })
-                            )
-                        ])
+                        MolScriptBuilder.core.logic.or(
+                            this.structureMapping.map((fragment) => {
+                                return MolScriptBuilder.core.rel.inRange([
+                                    MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id(),
+                                    fragment.start.residue_number,
+                                    fragment.end.residue_number
+                                ]);
+                            })
+                        )
                     ])
                 };
                 const selection = Script.getStructureSelection(
@@ -423,13 +419,13 @@ export default class MolstarPlugin {
             let fragmentStart = fragment.start;
             let fragmentEnd = fragment.end;
             const minMappedResidue = Math.min(
-                ...this.structureMapping.fragmentMappings.map((mapping) => {
-                    return mapping.from;
+                ...this.structureMapping.map((mapping) => {
+                    return mapping.unp_start;
                 })
             );
             const maxMappedResidue = Math.min(
-                ...this.structureMapping.fragmentMappings.map((mapping) => {
-                    return mapping.to;
+                ...this.structureMapping.map((mapping) => {
+                    return mapping.unp_end;
                 })
             );
             if (fragmentStart < minMappedResidue && fragmentEnd > maxMappedResidue) {
@@ -498,14 +494,14 @@ export default class MolstarPlugin {
     private selectFragment(from: number, to: number, data: Structure, chain?: string) {
         const filter: Record<string, Expression> = {
             "residue-test": MolScriptBuilder.core.rel.inRange([
-                MolScriptBuilder.struct.atomProperty.macromolecular.auth_seq_id(),
+                MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id(),
                 from,
                 to
             ])
         };
         if (chain) {
             filter["chain-test"] = MolScriptBuilder.core.rel.eq([
-                MolScriptBuilder.struct.atomProperty.macromolecular.auth_asym_id(),
+                MolScriptBuilder.struct.atomProperty.macromolecular.label_asym_id(),
                 chain
             ]);
         }

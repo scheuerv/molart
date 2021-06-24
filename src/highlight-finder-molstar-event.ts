@@ -4,62 +4,61 @@ import { StructureElement, StructureProperties } from "Molstar/mol-model/structu
 import { getStructureElementLoci } from "./molstar-utils";
 import { FragmentMapping, Mapping } from "uniprot-nightingale/src/types/mapping";
 
-export interface AuthSeqIdExtractor {
-    extractAuthSeqId(e: Canvas3D.HoverEvent): number | undefined;
+export interface LabelSeqIdExtractor {
+    extractLabelSeqId(e: Canvas3D.HoverEvent): number | undefined;
 }
-export class MolstarAuthSeqIdExtractor implements AuthSeqIdExtractor {
-    public extractAuthSeqId(e: Canvas3D.HoverEvent): number | undefined {
+export class MolstarLabelSeqIdExtractor implements LabelSeqIdExtractor {
+    public extractLabelSeqId(e: Canvas3D.HoverEvent): number | undefined {
         const structureElementLoci = getStructureElementLoci(e.current?.loci);
         if (structureElementLoci) {
             const structureElement = StructureElement.Stats.ofLoci(structureElementLoci);
             const location = structureElement.firstElementLoc;
             if (location.unit) {
-                return StructureProperties.residue.auth_seq_id(location);
+                return StructureProperties.residue.label_seq_id(location);
             }
         }
     }
 }
 export default class HighlightFinderMolstarEvent {
-    constructor(private readonly authSeqIdExtractor: AuthSeqIdExtractor) {}
+    constructor(private readonly labelSeqIdExtractor: LabelSeqIdExtractor) {}
 
     public calculate(e: Canvas3D.HoverEvent, structureMapping: Mapping): Highlight[] {
         const result: Highlight[] = [];
-        const authSeqId = this.authSeqIdExtractor.extractAuthSeqId(e);
-        if (authSeqId) {
-            const position = this.getPosition(authSeqId, structureMapping);
+        const labelSeqId = this.labelSeqIdExtractor.extractLabelSeqId(e);
+        if (labelSeqId) {
+            const position = this.getPosition(labelSeqId, structureMapping);
             if (position) {
-                if (
-                    position >= structureMapping.uniprotStart &&
-                    position <= structureMapping.uniprotEnd
-                ) {
-                    result.push({ start: position, end: position });
-                }
+                result.push({ start: position, end: position });
             }
         }
         return result;
     }
 
-    private getPosition(authSeqId: number, structureMapping: Mapping): number | undefined {
-        let position: number | undefined;
-        const fragmentMapping = this.getFragmentMapping(authSeqId, structureMapping);
+    private getPosition(
+        structureResidueNumber: number,
+        structureMapping: Mapping
+    ): number | undefined {
+        const fragmentMapping = this.getFragmentMapping(structureResidueNumber, structureMapping);
         if (fragmentMapping) {
-            const useMapping = structureMapping.uniprotStart == fragmentMapping.pdbStart;
-            if (useMapping) {
-                position = authSeqId;
-            } else {
-                position = authSeqId - fragmentMapping.pdbStart + fragmentMapping.from;
-            }
+            return (
+                structureResidueNumber -
+                fragmentMapping.start.residue_number +
+                fragmentMapping.unp_start
+            );
         }
-        return position;
+        return undefined;
     }
 
     private getFragmentMapping(
-        resNum: number,
+        structureResidueNumber: number,
         structureMapping: Mapping
     ): FragmentMapping | undefined {
-        for (let i = 0; i < structureMapping.fragmentMappings.length; i++) {
-            const fragmentMapping = structureMapping.fragmentMappings[i];
-            if (fragmentMapping.pdbStart <= resNum && fragmentMapping.pdbEnd >= resNum) {
+        for (let i = 0; i < structureMapping.length; i++) {
+            const fragmentMapping = structureMapping[i];
+            if (
+                fragmentMapping.start.residue_number <= structureResidueNumber &&
+                fragmentMapping.end.residue_number >= structureResidueNumber
+            ) {
                 return fragmentMapping;
             }
         }

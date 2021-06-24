@@ -187,8 +187,8 @@ export class TypedMolArt {
         return this.trackManager;
     }
     public getSequenceStructureRange(): number[][] {
-        return this.structureMapping.fragmentMappings.map((fragmentMapping) => {
-            return [fragmentMapping.from, fragmentMapping.to];
+        return this.structureMapping.map((fragmentMapping) => {
+            return [fragmentMapping.unp_start, fragmentMapping.unp_end];
         });
     }
 }
@@ -204,11 +204,11 @@ export type StructureConfig = {
         label: string;
         props: StructureRepresentationBuiltInProps;
         residue?: {
-            authResidueNumFrom: number;
-            authResidueNumTo: number;
+            labelResidueNumFrom: number;
+            labelResidueNumTo: number;
         };
-        authChain?: string[];
-        authAtom?: string[];
+        labelChain?: string[];
+        labelAtom?: string[];
     }[];
 };
 
