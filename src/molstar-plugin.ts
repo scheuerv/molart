@@ -275,78 +275,86 @@ export default class MolstarPlugin {
                 ]);
             })
         );
-        const polymer = await this.plugin.builders.structure.tryCreateComponentFromExpression(
+        const polymerSelector = await this.plugin.builders.structure.tryCreateComponentStatic(
             this.structure,
-            MolScriptBuilder.struct.generator.atomGroups({ "residue-test": mappedExpression }),
             "polymer"
         );
-        const notMappedComponent =
-            await this.plugin.builders.structure.tryCreateComponentFromExpression(
+        if (polymerSelector) {
+            const mappedPolymer = await this.plugin.builders.structure.tryCreateComponentFromExpression(
+                polymerSelector.ref,
+                MolScriptBuilder.struct.generator.atomGroups({ "residue-test": mappedExpression }),
+                "polymer"
+            );
+            const ligand = await this.plugin.builders.structure.tryCreateComponentStatic(
                 this.structure,
-                MolScriptBuilder.struct.generator.atomGroups({
-                    "residue-test": MolScriptBuilder.core.logic.not([mappedExpression])
-                }),
-                "not mapped"
+                "ligand"
             );
-        await this.plugin.builders.structure.representation.addRepresentation(notMappedComponent!, {
-            type: "cartoon",
-            typeParams: { alpha: 1 },
-            color: "uniform",
-            colorParams: { value: 0x666666 },
-            size: "uniform"
-        });
-        this.notMappedMolecularSurfaceRepresentation =
-            await this.plugin.builders.structure.representation.addRepresentation(
-                notMappedComponent!,
-                {
-                    type: "molecular-surface",
-                    typeParams: { alpha: 1 },
-                    color: "uniform"
-                }
+            const lipid = await this.plugin.builders.structure.tryCreateComponentStatic(
+                this.structure,
+                "lipid"
             );
-        const ligand = await this.plugin.builders.structure.tryCreateComponentStatic(
-            this.structure,
-            "ligand"
-        );
-        const lipid = await this.plugin.builders.structure.tryCreateComponentStatic(
-            this.structure,
-            "lipid"
-        );
-        const water = await this.plugin.builders.structure.tryCreateComponentStatic(
-            this.structure,
-            "water"
-        );
-        if (ligand) {
-            await this.plugin.builders.structure.representation.addRepresentation(ligand, {
-                type: "ball-and-stick",
-                color: "element-symbol"
-            });
-        }
-        if (lipid) {
-            await this.plugin.builders.structure.representation.addRepresentation(lipid, {
-                type: "ball-and-stick",
-                color: "element-symbol"
-            });
-        }
-        if (water) {
-            await this.plugin.builders.structure.representation.addRepresentation(water, {
-                type: "ball-and-stick",
-                color: "element-symbol"
-            });
-        }
-        if (polymer) {
-            this.cartoonRepr =
-                await this.plugin.builders.structure.representation.addRepresentation(polymer, {
+            const water = await this.plugin.builders.structure.tryCreateComponentStatic(
+                this.structure,
+                "water"
+            );
+            if (ligand) {
+                await this.plugin.builders.structure.representation.addRepresentation(ligand, {
+                    type: "ball-and-stick",
+                    color: "element-symbol"
+                });
+            }
+            if (lipid) {
+                await this.plugin.builders.structure.representation.addRepresentation(lipid, {
+                    type: "ball-and-stick",
+                    color: "element-symbol"
+                });
+            }
+            if (water) {
+                await this.plugin.builders.structure.representation.addRepresentation(water, {
+                    type: "ball-and-stick",
+                    color: "element-symbol"
+                });
+            }
+            const notMappedComponent =
+                await this.plugin.builders.structure.tryCreateComponentFromExpression(
+                    polymerSelector.ref,
+                    MolScriptBuilder.struct.generator.atomGroups({
+                        "residue-test": MolScriptBuilder.core.logic.not([mappedExpression])
+                    }),
+                    "not mapped"
+                );
+            if (notMappedComponent) {
+                await this.plugin.builders.structure.representation.addRepresentation(notMappedComponent, {
                     type: "cartoon",
-                    color: "chain-id"
-                });
-            this.molecularSurfaceRepr =
-                await this.plugin.builders.structure.representation.addRepresentation(polymer, {
-                    type: "molecular-surface",
                     typeParams: { alpha: 1 },
-                    color: "uniform"
+                    color: "uniform",
+                    colorParams: { value: 0x666666 },
+                    size: "uniform"
                 });
-            return true;
+                this.notMappedMolecularSurfaceRepresentation =
+                    await this.plugin.builders.structure.representation.addRepresentation(
+                        notMappedComponent!,
+                        {
+                            type: "molecular-surface",
+                            typeParams: { alpha: 1 },
+                            color: "uniform"
+                        }
+                    );
+            }
+            if (mappedPolymer) {
+                this.cartoonRepr =
+                    await this.plugin.builders.structure.representation.addRepresentation(mappedPolymer, {
+                        type: "cartoon",
+                        color: "chain-id"
+                    });
+                this.molecularSurfaceRepr =
+                    await this.plugin.builders.structure.representation.addRepresentation(mappedPolymer, {
+                        type: "molecular-surface",
+                        typeParams: { alpha: 1 },
+                        color: "uniform"
+                    });
+                return true;
+            }
         }
     }
 
