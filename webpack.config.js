@@ -27,7 +27,7 @@ const sharedConfig = {
       },
       {
         test: /\.scss$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader', 'resolve-url-loader', 'sass-loader']
+        use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
       },
       {
         test: /\.css$/,
@@ -82,7 +82,7 @@ const sharedConfig = {
 function createEntryPoint(name) {
   return {
     devtool: "inline-source-map",
-    entry: ["@babel/polyfill", path.resolve(__dirname, `src/index.html`), path.resolve(__dirname, `src/index.ts`)],
+    entry: [path.resolve(__dirname, `src/index.html`), path.resolve(__dirname, `src/index.ts`)],
     output: {
       filename: `${name}.js`,
       path: path.resolve(__dirname, `dist/`)
