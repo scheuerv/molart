@@ -22,13 +22,13 @@ import { StateTransforms } from "molstar/lib/mol-plugin-state/transforms";
 import { Script } from "molstar/lib/mol-script/script";
 import { Bundle } from "molstar/lib/mol-model/structure/structure/element/bundle";
 import { Loci } from "Molstar/mol-model/loci";
-import { Highlight } from "uniprot-nightingale/src/manager/track-manager";
 import { StructureConfig } from "../src/index";
 import { mixFragmentColors } from "./fragment-color-mixer";
-import { Mapping } from "uniprot-nightingale/src/types/mapping";
+import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
 import HighlightFinderNightingaleEvent from "./highlight-finder-nightingale-event";
 import $ from "jquery";
 import { Residue } from "./types/residue";
+import { Highlight } from "uniprot-nightingale/src/types/highlight";
 
 type ExtraHiglight = {
     isVisible: boolean;
@@ -46,11 +46,12 @@ export default class MolstarPlugin {
     public readonly onHover = this.emitOnHover.event;
     private readonly emitOnHighlightChange = createEmitter<Highlight[]>();
     public readonly onHighlightChange = this.emitOnHighlightChange.event;
-    private mouseOverHighlightedResidueInStructure?: StructureElement.Loci;
-    private highlightedResidueInStructure?: Loci;
+    private mouseOverHighlightedResiduesInStructure: StructureElement.Loci[] = [];
+    private highlightedResiduesInStructure: Loci[] = [];
+    private output?: Output;
     private molecularSurfaceRepr?: StateObjectSelector;
     private cartoonRepr?: StateObjectSelector;
-    private structureMapping: Mapping;
+    private activeChainStructureMapping: FragmentMapping[];
     private readonly emitOnStructureLoaded = createEmitter<void>();
     public readonly onStructureLoaded = this.emitOnStructureLoaded.event;
 
@@ -90,16 +91,16 @@ export default class MolstarPlugin {
 
         this.plugin.canvas3d?.interaction.hover.subscribe((e: Canvas3D.HoverEvent) => {
             const structureElementLoci = getStructureElementLoci(e.current.loci);
-            if (this.mouseOverHighlightedResidueInStructure && !structureElementLoci) {
+            if (this.mouseOverHighlightedResiduesInStructure.length > 0 && !structureElementLoci) {
                 this.emitOnHover.emit(null);
-                this.mouseOverHighlightedResidueInStructure = undefined;
+                this.mouseOverHighlightedResiduesInStructure = [];
             } else if (
                 structureElementLoci &&
-                (!this.mouseOverHighlightedResidueInStructure ||
-                    !StructureElement.Loci.areEqual(
-                        this.mouseOverHighlightedResidueInStructure,
-                        structureElementLoci
-                    ))
+                this.mouseOverHighlightedResiduesInStructure.length == 1 &&
+                !StructureElement.Loci.areEqual(
+                    this.mouseOverHighlightedResiduesInStructure[0],
+                    structureElementLoci
+                )
             ) {
                 const structureElement = StructureElement.Stats.ofLoci(structureElementLoci);
                 const location = structureElement.firstElementLoc;
@@ -123,12 +124,15 @@ export default class MolstarPlugin {
                 };
                 this.emitOnHover.emit(residue);
             }
-            const highlights = this.highlightFinderMolstarEvent.calculate(e, this.structureMapping);
-            if (this.highlightedResidueInStructure) {
+            const highlights = this.highlightFinderMolstarEvent.calculate(
+                e,
+                this.activeChainStructureMapping
+            );
+            this.highlightedResiduesInStructure.forEach((loci) => {
                 this.plugin.managers.interactivity.lociHighlights.highlight({
-                    loci: this.highlightedResidueInStructure
+                    loci: loci
                 });
-            }
+            });
             this.emitOnHighlightChange(highlights);
         });
     }
@@ -140,7 +144,12 @@ export default class MolstarPlugin {
         isBinary = false,
         assemblyId = ""
     ): Promise<void> {
-        this.structureMapping = output.mapping;
+        const chainMapping = output.mapping[output.chain];
+        if (!chainMapping) {
+            throw Error(`No mapping for ${output.pdbId} ${output.chain}`);
+        }
+        this.activeChainStructureMapping = chainMapping.fragmentMappings;
+        this.output = output;
         this.molecularSurfaceRepr = undefined;
         this.cartoonRepr = undefined;
         await this.plugin.clear();
@@ -266,25 +275,39 @@ export default class MolstarPlugin {
         }
     }
     private async createRepresentations() {
-        const mappedExpression = MolScriptBuilder.core.logic.or(
-            this.structureMapping.map((fragment) => {
-                return MolScriptBuilder.core.rel.inRange([
-                    MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id(),
-                    fragment.start.residue_number,
-                    fragment.end.residue_number
-                ]);
-            })
-        );
+        let expressions: Expression[] = [];
+        if (this.output) {
+            Object.entries(this.output!.mapping).forEach(([chainId, chainMapping]) => {
+                const chainExpressions = chainMapping.fragmentMappings.map((fragment) => {
+                    return MolScriptBuilder.core.logic.and([
+                        MolScriptBuilder.core.rel.inRange([
+                            MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id(),
+                            fragment.structureStart,
+                            fragment.structureEnd
+                        ]),
+                        MolScriptBuilder.core.rel.eq([
+                            MolScriptBuilder.struct.atomProperty.macromolecular.label_asym_id(),
+                            this.output?.format == "mmcif" ? chainMapping.structAsymId : chainId
+                        ])
+                    ]);
+                });
+                expressions = expressions.concat(chainExpressions);
+            });
+        }
+        const mappedExpression = MolScriptBuilder.core.logic.or(expressions);
         const polymerSelector = await this.plugin.builders.structure.tryCreateComponentStatic(
             this.structure,
             "polymer"
         );
         if (polymerSelector) {
-            const mappedPolymer = await this.plugin.builders.structure.tryCreateComponentFromExpression(
-                polymerSelector.ref,
-                MolScriptBuilder.struct.generator.atomGroups({ "residue-test": mappedExpression }),
-                "polymer"
-            );
+            const mappedPolymer =
+                await this.plugin.builders.structure.tryCreateComponentFromExpression(
+                    polymerSelector.ref,
+                    MolScriptBuilder.struct.generator.atomGroups({
+                        "residue-test": mappedExpression
+                    }),
+                    "polymer"
+                );
             const ligand = await this.plugin.builders.structure.tryCreateComponentStatic(
                 this.structure,
                 "ligand"
@@ -324,13 +347,16 @@ export default class MolstarPlugin {
                     "not mapped"
                 );
             if (notMappedComponent) {
-                await this.plugin.builders.structure.representation.addRepresentation(notMappedComponent, {
-                    type: "cartoon",
-                    typeParams: { alpha: 1 },
-                    color: "uniform",
-                    colorParams: { value: 0x666666 },
-                    size: "uniform"
-                });
+                await this.plugin.builders.structure.representation.addRepresentation(
+                    notMappedComponent,
+                    {
+                        type: "cartoon",
+                        typeParams: { alpha: 1 },
+                        color: "uniform",
+                        colorParams: { value: 0x666666 },
+                        size: "uniform"
+                    }
+                );
                 this.notMappedMolecularSurfaceRepresentation =
                     await this.plugin.builders.structure.representation.addRepresentation(
                         notMappedComponent!,
@@ -343,16 +369,22 @@ export default class MolstarPlugin {
             }
             if (mappedPolymer) {
                 this.cartoonRepr =
-                    await this.plugin.builders.structure.representation.addRepresentation(mappedPolymer, {
-                        type: "cartoon",
-                        color: "chain-id"
-                    });
+                    await this.plugin.builders.structure.representation.addRepresentation(
+                        mappedPolymer,
+                        {
+                            type: "cartoon",
+                            color: "chain-id"
+                        }
+                    );
                 this.molecularSurfaceRepr =
-                    await this.plugin.builders.structure.representation.addRepresentation(mappedPolymer, {
-                        type: "molecular-surface",
-                        typeParams: { alpha: 1 },
-                        color: "uniform"
-                    });
+                    await this.plugin.builders.structure.representation.addRepresentation(
+                        mappedPolymer,
+                        {
+                            type: "molecular-surface",
+                            typeParams: { alpha: 1 },
+                            color: "uniform"
+                        }
+                    );
                 return true;
             }
         }
@@ -383,9 +415,9 @@ export default class MolstarPlugin {
 
     public highlightMouseOverResidue(resNum?: number): void {
         if (resNum) {
-            this.mouseOverHighlightedResidueInStructure = this.findLociFromResidueNumber(resNum);
+            this.mouseOverHighlightedResiduesInStructure = this.findLocisFromResidueNumber(resNum);
         } else {
-            this.mouseOverHighlightedResidueInStructure = undefined;
+            this.mouseOverHighlightedResiduesInStructure = [];
         }
         this.highlightStructureResidues();
     }
@@ -399,26 +431,27 @@ export default class MolstarPlugin {
     }
 
     public focusInStructure(resNum: number, radius = 0, chain?: string): void {
-        const loci = this.findLociFromResidueNumber(resNum, chain);
-        if (loci) {
-            this.plugin.managers.structure.focus.setFromLoci(loci);
-            this.plugin.managers.camera.focusLoci(loci, { extraRadius: radius });
+        const locis = this.findLocisFromResidueNumber(resNum, chain);
+        if (locis[0]) {
+            this.plugin.managers.structure.focus.setFromLoci(locis[0]);
+            this.plugin.managers.camera.focusLoci(locis[0], { extraRadius: radius });
         }
     }
 
     public highlightInStructure(resNum: number): void {
-        this.highlightedResidueInStructure = this.findLociFromResidueNumber(resNum);
+        this.highlightedResiduesInStructure = this.findLocisFromResidueNumber(resNum);
         this.highlightStructureResidues();
     }
 
     public unhighlightInStructure(): void {
-        this.highlightedResidueInStructure = undefined;
+        this.highlightedResiduesInStructure = [];
         this.plugin.managers.interactivity.lociHighlights.clearHighlights();
-        if (this.mouseOverHighlightedResidueInStructure) {
-            this.plugin.managers.interactivity.lociHighlights.highlightOnly({
-                loci: this.mouseOverHighlightedResidueInStructure
+        this.plugin.managers.interactivity.lociHighlights.clearHighlights();
+        this.mouseOverHighlightedResiduesInStructure.forEach((loci) => {
+            this.plugin.managers.interactivity.lociHighlights.highlight({
+                loci: loci
             });
-        }
+        });
     }
 
     public overpaintFragments(fragments: TrackFragment[]): void {
@@ -430,49 +463,36 @@ export default class MolstarPlugin {
             let fragmentStart = fragment.start;
             let fragmentEnd = fragment.end;
             const minMappedResidue = Math.min(
-                ...this.structureMapping.map((mapping) => {
-                    return mapping.unp_start;
+                ...this.activeChainStructureMapping.map((mapping) => {
+                    return mapping.sequenceStart;
                 })
             );
             const maxMappedResidue = Math.min(
-                ...this.structureMapping.map((mapping) => {
-                    return mapping.unp_end;
+                ...this.activeChainStructureMapping.map((mapping) => {
+                    return mapping.sequenceEnd;
                 })
             );
             if (fragmentStart < minMappedResidue && fragmentEnd > maxMappedResidue) {
                 fragmentStart = minMappedResidue;
                 fragmentEnd = maxMappedResidue;
             }
-            let startMapped = this.highlightFinderNightingaleEvent.calculate(
-                fragmentStart,
-                this.structureMapping
-            );
-            let endMapped = this.highlightFinderNightingaleEvent.calculate(
-                fragmentEnd,
-                this.structureMapping
-            );
-            if (!startMapped && endMapped) {
-                startMapped =
-                    this.highlightFinderNightingaleEvent.getStructurePositionOfFirstResidueInFragment(
-                        fragmentEnd,
-                        this.structureMapping
-                    );
-            } else if (!endMapped) {
-                endMapped =
-                    this.highlightFinderNightingaleEvent.getStructurePositionOfLastResidueInFragment(
-                        fragmentStart,
-                        this.structureMapping
-                    );
-            }
-            if (startMapped && endMapped) {
-                const sel = this.selectFragment(startMapped, endMapped, data);
-                const bundle = Bundle.fromSelection(sel);
-                params.push({
-                    bundle: bundle,
-                    color: Color(parseInt(fragment.color.slice(1), 16)),
-                    clear: false
+            const rangesForChains: Map<string, [number, number][]> =
+                this.highlightFinderNightingaleEvent.calculateFromRange(
+                    fragmentStart,
+                    fragmentEnd,
+                    this.output?.mapping
+                );
+            rangesForChains.forEach((ranges, chain) => {
+                ranges.forEach((range) => {
+                    const sel = this.selectFragment(range[0], range[1], data, chain);
+                    const bundle = Bundle.fromSelection(sel);
+                    params.push({
+                        bundle: bundle,
+                        color: Color(parseInt(fragment.color.slice(1), 16)),
+                        clear: false
+                    });
                 });
-            }
+            });
         });
         const update = this.plugin.build();
         update
@@ -490,16 +510,16 @@ export default class MolstarPlugin {
 
     private highlightStructureResidues(): void {
         this.plugin.managers.interactivity.lociHighlights.clearHighlights();
-        if (this.highlightedResidueInStructure) {
+        this.highlightedResiduesInStructure.forEach((loci) => {
             this.plugin.managers.interactivity.lociHighlights.highlight({
-                loci: this.highlightedResidueInStructure
+                loci: loci
             });
-        }
-        if (this.mouseOverHighlightedResidueInStructure) {
+        });
+        this.mouseOverHighlightedResiduesInStructure.forEach((loci) => {
             this.plugin.managers.interactivity.lociHighlights.highlight({
-                loci: this.mouseOverHighlightedResidueInStructure
+                loci: loci
             });
-        }
+        });
     }
 
     private selectFragment(from: number, to: number, data: Structure, chain?: string) {
@@ -522,21 +542,27 @@ export default class MolstarPlugin {
         );
     }
 
-    private findLociFromResidueNumber(
-        resNum: number,
-        chain?: string
-    ): StructureElement.Loci | undefined {
+    private findLocisFromResidueNumber(resNum: number, chain?: string): StructureElement.Loci[] {
         const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
         if (data) {
-            const position = this.highlightFinderNightingaleEvent.calculate(
+            const positionForChain = this.highlightFinderNightingaleEvent.calculate(
                 resNum,
-                this.structureMapping
+                this.output?.mapping,
+                this.output?.format
             );
-            if (position) {
-                const sel = this.selectFragment(position, position, data, chain);
-                return StructureSelection.toLociWithSourceUnits(sel);
-            }
+            const locis: StructureElement.Loci[] = [];
+            positionForChain.forEach((position, chainId) => {
+                if (!chain || chain == chainId) {
+                    locis.push(
+                        StructureSelection.toLociWithSourceUnits(
+                            this.selectFragment(position, position, data, chainId)
+                        )
+                    );
+                }
+            });
+            return locis;
         }
+        return [];
     }
 
     private setTransparency(value?: string) {

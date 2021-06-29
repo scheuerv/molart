@@ -59,7 +59,7 @@ const sharedConfig = {
   plugins: [
     new ExtraWatchWebpackPlugin({
       files: [
-        './src/**/*.s?css',
+        './src/**/*.css',
         './src/**/*.html',
         './tsconfig.json',
         './node_modules/uniprot-nightingale/**'

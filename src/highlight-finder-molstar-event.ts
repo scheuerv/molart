@@ -1,8 +1,8 @@
-import { Highlight } from "uniprot-nightingale/src/manager/track-manager";
 import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
 import { StructureElement, StructureProperties } from "Molstar/mol-model/structure";
 import { getStructureElementLoci } from "./molstar-utils";
-import { FragmentMapping, Mapping } from "uniprot-nightingale/src/types/mapping";
+import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
+import { Highlight } from "uniprot-nightingale/src/types/highlight";
 
 export interface LabelSeqIdExtractor {
     extractLabelSeqId(e: Canvas3D.HoverEvent): number | undefined;
@@ -22,7 +22,7 @@ export class MolstarLabelSeqIdExtractor implements LabelSeqIdExtractor {
 export default class HighlightFinderMolstarEvent {
     constructor(private readonly labelSeqIdExtractor: LabelSeqIdExtractor) {}
 
-    public calculate(e: Canvas3D.HoverEvent, structureMapping: Mapping): Highlight[] {
+    public calculate(e: Canvas3D.HoverEvent, structureMapping: FragmentMapping[]): Highlight[] {
         const result: Highlight[] = [];
         const labelSeqId = this.labelSeqIdExtractor.extractLabelSeqId(e);
         if (labelSeqId) {
@@ -36,14 +36,14 @@ export default class HighlightFinderMolstarEvent {
 
     private getPosition(
         structureResidueNumber: number,
-        structureMapping: Mapping
+        structureMapping: FragmentMapping[]
     ): number | undefined {
         const fragmentMapping = this.getFragmentMapping(structureResidueNumber, structureMapping);
         if (fragmentMapping) {
             return (
                 structureResidueNumber -
-                fragmentMapping.start.residue_number +
-                fragmentMapping.unp_start
+                fragmentMapping.structureStart +
+                fragmentMapping.sequenceStart
             );
         }
         return undefined;
@@ -51,13 +51,13 @@ export default class HighlightFinderMolstarEvent {
 
     private getFragmentMapping(
         structureResidueNumber: number,
-        structureMapping: Mapping
+        structureMapping: FragmentMapping[]
     ): FragmentMapping | undefined {
         for (let i = 0; i < structureMapping.length; i++) {
             const fragmentMapping = structureMapping[i];
             if (
-                fragmentMapping.start.residue_number <= structureResidueNumber &&
-                fragmentMapping.end.residue_number >= structureResidueNumber
+                fragmentMapping.structureStart <= structureResidueNumber &&
+                fragmentMapping.structureEnd >= structureResidueNumber
             ) {
                 return fragmentMapping;
             }

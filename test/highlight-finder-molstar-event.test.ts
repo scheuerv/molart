@@ -3,9 +3,9 @@ import HighlightFinderMolstarEvent, {
 } from "../src/highlight-finder-molstar-event";
 import { Representation } from "Molstar/mol-repr/representation";
 import { ModifiersKeys } from "Molstar/mol-util/input/input-observer";
-import { Highlight } from "uniprot-nightingale/src/manager/track-manager";
 import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
-import { Mapping } from "uniprot-nightingale/src/types/mapping";
+import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
+import { Highlight } from "uniprot-nightingale/src/types/highlight";
 
 describe("HighlightFinderMolstarEvent tests", function () {
     const fakeHoverEvent: Canvas3D.HoverEvent = {
@@ -24,16 +24,12 @@ describe("HighlightFinderMolstarEvent tests", function () {
 
     it("fragment covers whole sequence, no difference between sequence - structure position", async () => {
         fakeExtractor.fakePosition = 5;
-        const mapping = [
+        const mapping: FragmentMapping[] = [
             {
-                unp_start: 0,
-                unp_end: 140,
-                start: {
-                    residue_number: 0
-                },
-                end: {
-                    residue_number: 140
-                }
+                sequenceStart: 0,
+                sequenceEnd: 140,
+                structureStart: 0,
+                structureEnd: 140
             }
         ];
         const highlights: Highlight[] = instance.calculate(fakeHoverEvent, mapping);
@@ -47,26 +43,18 @@ describe("HighlightFinderMolstarEvent tests", function () {
 
     it("position outside of fragments", async () => {
         fakeExtractor.fakePosition = 50;
-        const mapping: Mapping = [
+        const mapping: FragmentMapping[] = [
             {
-                start: {
-                    residue_number: 90
-                },
-                end: {
-                    residue_number: 140
-                },
-                unp_start: 90,
-                unp_end: 140
+                structureStart: 90,
+                structureEnd: 140,
+                sequenceStart: 90,
+                sequenceEnd: 140
             },
             {
-                start: {
-                    residue_number: 10
-                },
-                end: {
-                    residue_number: 20
-                },
-                unp_start: 10,
-                unp_end: 20
+                structureStart: 10,
+                structureEnd: 20,
+                sequenceStart: 10,
+                sequenceEnd: 20
             }
         ];
         const highlights: Highlight[] = instance.calculate(fakeHoverEvent, mapping);
@@ -75,26 +63,18 @@ describe("HighlightFinderMolstarEvent tests", function () {
 
     it("position outside of sequence", async () => {
         fakeExtractor.fakePosition = 180;
-        const mapping: Mapping = [
+        const mapping: FragmentMapping[] = [
             {
-                start: {
-                    residue_number: 90
-                },
-                end: {
-                    residue_number: 140
-                },
-                unp_start: 90,
-                unp_end: 140
+                structureStart: 90,
+                structureEnd: 140,
+                sequenceStart: 90,
+                sequenceEnd: 140
             },
             {
-                start: {
-                    residue_number: 10
-                },
-                end: {
-                    residue_number: 20
-                },
-                unp_start: 10,
-                unp_end: 20
+                structureStart: 10,
+                structureEnd: 20,
+                sequenceStart: 10,
+                sequenceEnd: 20
             }
         ];
         const highlights: Highlight[] = instance.calculate(fakeHoverEvent, mapping);
@@ -109,18 +89,18 @@ describe("HighlightFinderMolstarEvent tests", function () {
 
     it("difference between sequence - structure position, two fragments, position in first fragment", async () => {
         fakeExtractor.fakePosition = 373;
-        const mapping: Mapping = [
+        const mapping: FragmentMapping[] = [
             {
-                start: { residue_number: 372 },
-                end: { residue_number: 373 },
-                unp_start: 10,
-                unp_end: 11
+                structureStart: 372,
+                structureEnd: 373,
+                sequenceStart: 10,
+                sequenceEnd: 11
             },
             {
-                start: { residue_number: 382 },
-                end: { residue_number: 404 },
-                unp_start: 20,
-                unp_end: 42
+                structureStart: 382,
+                structureEnd: 404,
+                sequenceStart: 20,
+                sequenceEnd: 42
             }
         ];
         const highlights: Highlight[] = instance.calculate(fakeHoverEvent, mapping);
@@ -134,18 +114,18 @@ describe("HighlightFinderMolstarEvent tests", function () {
 
     it("difference between sequence - structure position, two fragments, position in second fragment", async () => {
         fakeExtractor.fakePosition = 385;
-        const mapping: Mapping = [
+        const mapping: FragmentMapping[] = [
             {
-                start: { residue_number: 372 },
-                end: { residue_number: 373 },
-                unp_start: 10,
-                unp_end: 11
+                structureStart: 372,
+                structureEnd: 373,
+                sequenceStart: 10,
+                sequenceEnd: 11
             },
             {
-                start: { residue_number: 382 },
-                end: { residue_number: 404 },
-                unp_start: 20,
-                unp_end: 42
+                structureStart: 382,
+                structureEnd: 404,
+                sequenceStart: 20,
+                sequenceEnd: 42
             }
         ];
         const highlights = instance.calculate(fakeHoverEvent, mapping);

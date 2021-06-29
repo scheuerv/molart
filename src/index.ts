@@ -1,5 +1,4 @@
 import { TrackManager } from "uniprot-nightingale/src/index";
-import { Config as SequenceConfig, Highlight } from "uniprot-nightingale/src/manager/track-manager";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap";
 import "bootstrap-multiselect";
@@ -8,10 +7,12 @@ import { StructureRepresentationBuiltInProps } from "Molstar/mol-plugin-state/he
 import { createEmitter } from "ts-typed-events";
 require("Molstar/mol-plugin-ui/skin/light.scss");
 require("./main.css");
-import { Mapping } from "uniprot-nightingale/src/types/mapping";
+import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
 import MolstarPlugin from "./molstar-plugin";
 import { Residue } from "./types/residue";
 import $ from "jquery";
+import { Highlight } from "uniprot-nightingale/src/types/highlight";
+import { Config as SequenceConfig } from "uniprot-nightingale/src/types/config";
 
 export class TypedMolArt {
     private plugin: MolstarPlugin;
@@ -20,7 +21,7 @@ export class TypedMolArt {
     private trackManager?: TrackManager;
     private previousWindowWidth: number | undefined = undefined;
     private readonly minWindowWidth = 1500;
-    private structureMapping: Mapping;
+    private activeChainStructureMapping: FragmentMapping[] = [];
     private highligtedInSequence?: Highlight;
     private mouseOverHighlightedResidueInSequence?: number;
     private readonly emitOnSequenceMouseOn = createEmitter<number>();
@@ -108,7 +109,7 @@ export class TypedMolArt {
         this.trackManager?.onRendered.offAll();
         this.trackManager = TrackManager.createDefault(config.sequence);
         this.trackManager.onSelectedStructure.on((output) => {
-            this.structureMapping = output.mapping;
+            this.activeChainStructureMapping = output.mapping[output.chain]?.fragmentMappings ?? [];
             this.plugin.load(
                 output,
                 config.structure,
@@ -187,8 +188,8 @@ export class TypedMolArt {
         return this.trackManager;
     }
     public getSequenceStructureRange(): number[][] {
-        return this.structureMapping.map((fragmentMapping) => {
-            return [fragmentMapping.unp_start, fragmentMapping.unp_end];
+        return this.activeChainStructureMapping.map((fragmentMapping) => {
+            return [fragmentMapping.sequenceStart, fragmentMapping.sequenceEnd];
         });
     }
 }
