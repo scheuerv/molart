@@ -3,21 +3,19 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap";
 import "bootstrap-multiselect";
 import "bootstrap-multiselect/dist/css/bootstrap-multiselect.css";
-import { StructureRepresentationBuiltInProps } from "Molstar/mol-plugin-state/helpers/structure-representation-params";
 import { createEmitter } from "ts-typed-events";
-require("Molstar/mol-plugin-ui/skin/light.scss");
 require("./main.css");
 import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
-import MolstarPlugin from "./molstar-plugin";
 import { Residue } from "./types/residue";
 import $ from "jquery";
 import { Highlight } from "uniprot-nightingale/src/types/highlight";
 import { Config as SequenceConfig } from "uniprot-nightingale/src/types/config";
+import StructureViewer from "./structure-viewer";
+import MolstarPlugin from "./molstar-plugin";
 
-export class TypedMolArt {
-    private plugin: MolstarPlugin;
+export class TypedMolArt<StructureConfig> {
+    private plugin: StructureViewer<StructureConfig>;
     private protvistaWrapper: HTMLElement;
-    private target: HTMLElement;
     private trackManager?: TrackManager;
     private previousWindowWidth: number | undefined = undefined;
     private readonly minWindowWidth = 1500;
@@ -34,8 +32,12 @@ export class TypedMolArt {
     public readonly onStructureMouseOn = this.emitOnStructureMouseOn.event;
     private readonly emitOnStructureLoaded = createEmitter<void>();
     public readonly onStructureLoaded = this.emitOnStructureLoaded.event;
-    init(target: HTMLElement, targetProtvista: HTMLElement, config: Config = DefaultConfig): void {
-        this.target = target;
+    init(
+        plugin: StructureViewer<StructureConfig>,
+        targetProtvista: HTMLElement,
+        config: Config<StructureConfig>
+    ): void {
+        this.plugin = plugin;
         this.protvistaWrapper = targetProtvista;
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
@@ -44,7 +46,7 @@ export class TypedMolArt {
                         this.previousWindowWidth &&
                         this.previousWindowWidth <= this.minWindowWidth
                     ) {
-                        $(this.target)
+                        $(this.plugin.getOuterElement())
                             .css("top", entry.contentBoxSize[0].blockSize + "px")
                             .css("position", "absolute");
                     }
@@ -52,7 +54,6 @@ export class TypedMolArt {
             }
         });
         resizeObserver.observe(this.protvistaWrapper);
-        this.plugin = new MolstarPlugin(target);
 
         this.loadConfig(config);
         this.plugin.onStructureLoaded.on(() => {
@@ -81,7 +82,7 @@ export class TypedMolArt {
             windowWidth <= this.minWindowWidth &&
             (!this.previousWindowWidth || this.previousWindowWidth > this.minWindowWidth)
         ) {
-            $(this.target)
+            $(this.plugin.getOuterElement())
                 .css("left", "0")
                 .css("top", this.protvistaWrapper.offsetHeight + "px")
                 .css("width", "100%")
@@ -91,7 +92,7 @@ export class TypedMolArt {
             windowWidth > this.minWindowWidth &&
             (!this.previousWindowWidth || this.previousWindowWidth <= this.minWindowWidth)
         ) {
-            $(this.target)
+            $(this.plugin.getOuterElement())
                 .css("left", "50%")
                 .css("top", "0")
                 .css("width", "calc(50% - 2px)")
@@ -102,7 +103,7 @@ export class TypedMolArt {
         this.plugin.handleResize();
     }
 
-    public loadConfig(config: Config): void {
+    public async loadConfig(config: Config<StructureConfig>): Promise<void> {
         this.trackManager?.onHighlightChange.offAll();
         this.trackManager?.onResidueMouseOver.offAll();
         this.trackManager?.onFragmentMouseOut.offAll();
@@ -136,7 +137,7 @@ export class TypedMolArt {
         for (let i = 0; i < previousProtvistaManagers.length; i++) {
             previousProtvistaManagers[i].remove();
         }
-        this.trackManager.render(this.protvistaWrapper);
+        await this.trackManager.render(this.protvistaWrapper);
     }
 
     public isStructureLoaded(): boolean {
@@ -181,7 +182,7 @@ export class TypedMolArt {
     public focusInStructure(resNum: number, radius = 0, chain?: string): void {
         this.plugin.focusInStructure(resNum, radius, chain);
     }
-    public getStructureController(): MolstarPlugin {
+    public getStructureController(): StructureViewer<StructureConfig> {
         return this.plugin;
     }
     public getSequenceController(): TrackManager | undefined {
@@ -193,31 +194,10 @@ export class TypedMolArt {
         });
     }
 }
-(window as any).TypedMolArt = new TypedMolArt();
 
-export type Config = {
+export type Config<StructureConfig> = {
     structure: StructureConfig;
     sequence: SequenceConfig;
 };
 
-export type StructureConfig = {
-    extrahighlights: {
-        label: string;
-        props: StructureRepresentationBuiltInProps;
-        residue?: {
-            labelResidueNumFrom: number;
-            labelResidueNumTo: number;
-        };
-        labelChain?: string[];
-        labelAtom?: string[];
-    }[];
-};
-
-const DefaultConfig: Config = {
-    structure: {
-        extrahighlights: []
-    },
-    sequence: {
-        uniprotId: "P37840"
-    }
-};
+export { MolstarPlugin };

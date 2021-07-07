@@ -22,13 +22,14 @@ import { StateTransforms } from "molstar/lib/mol-plugin-state/transforms";
 import { Script } from "molstar/lib/mol-script/script";
 import { Bundle } from "molstar/lib/mol-model/structure/structure/element/bundle";
 import { Loci } from "Molstar/mol-model/loci";
-import { StructureConfig } from "../src/index";
 import { mixFragmentColors } from "./fragment-color-mixer";
 import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
 import HighlightFinderNightingaleEvent from "./highlight-finder-nightingale-event";
 import $ from "jquery";
 import { Residue } from "./types/residue";
 import { Highlight } from "uniprot-nightingale/src/types/highlight";
+import StructureViewer from "./structure-viewer";
+require("Molstar/mol-plugin-ui/skin/light.scss");
 
 type ExtraHiglight = {
     isVisible: boolean;
@@ -38,7 +39,7 @@ type ExtraHiglight = {
     readonly key: string;
 };
 
-export default class MolstarPlugin {
+export default class MolstarPlugin implements StructureViewer<MolstarStructureConfig> {
     private readonly highlightFinderMolstarEvent: HighlightFinderMolstarEvent =
         new HighlightFinderMolstarEvent(new MolstarLabelSeqIdExtractor());
     private plugin: PluginContext;
@@ -136,14 +137,17 @@ export default class MolstarPlugin {
             this.emitOnHighlightChange(highlights);
         });
     }
+    public getOuterElement(): HTMLElement {
+        return this.target;
+    }
 
     public async load(
         output: Output,
-        config: StructureConfig,
+        config: MolstarStructureConfig,
         markedFragments: TrackFragment[],
         isBinary = false,
         assemblyId = ""
-    ): Promise<void> {
+    ) {
         const chainMapping = output.mapping[output.chain];
         if (!chainMapping) {
             throw Error(`No mapping for ${output.pdbId} ${output.chain}`);
@@ -603,3 +607,16 @@ export default class MolstarPlugin {
         update.commit();
     }
 }
+
+export type MolstarStructureConfig = {
+    extrahighlights: {
+        label: string;
+        props: StructureRepresentationBuiltInProps;
+        residue?: {
+            labelResidueNumFrom: number;
+            labelResidueNumTo: number;
+        };
+        labelChain?: string[];
+        labelAtom?: string[];
+    }[];
+};
