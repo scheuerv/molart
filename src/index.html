@@ -6,7 +6,7 @@
             name="viewport"
             content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
         />
-        <title>Typed MolArt</title>
+        <title>MolArt</title>
         <style></style>
         <link rel="stylesheet" type="text/css" href="main.css" />
         <link
@@ -67,7 +67,7 @@
                 },
                 sequence: {
                     uniprotId: "P29274" //"P06702" //"P29274" //"P37840" //"Q8WZ42" //"O00330" //"P37840", //"P37840",//"P05067",//Q8WZ42",
-                    //sequence: TypedMolartExamples.sequence,
+                    //sequence: MolArtExamples.sequence,
                     /* pdbIds: ["6cu7", "2m55"],
                             smrIds: ["3q27.1", "2n0a.1"],
                             categoryOrder: [
@@ -83,7 +83,7 @@
                                 "MUTAGENESIS",
                                 "MOLECULE_PROCESSING",
                             ],*/
-                    // sequenceStructureMapping: TypedMolartExamples.sequenceStructureMapping
+                    // sequenceStructureMapping: MolArtExamples.sequenceStructureMapping
                     // customDataSources: [
                     //     {
                     //         source: "CUSTOM",
@@ -93,8 +93,7 @@
                     // ]
                 }
             };
-            const molart = new Molart.TypedMolArt();
-            molart.init(
+            new Molart.MolArt(
                 new Molart.MolstarPlugin(document.getElementById("ma-structure-wrapper")),
                 document.getElementById("ma-sequence-wrapper"),
                 config

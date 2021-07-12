@@ -14,7 +14,7 @@ export default interface StructureViewer<StructureConfig> {
         markedFragments: TrackFragment[],
         isBinary?: boolean,
         assemblyId?: string
-    ): void;
+    ): Promise<void>;
     overpaintFragments(fragments: TrackFragment[]): void;
     highlightMouseOverResidue(resNum?: number): void;
     isStructureLoaded(): boolean;

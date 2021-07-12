@@ -13,9 +13,7 @@ import { Config as SequenceConfig } from "uniprot-nightingale/src/types/config";
 
 require("./main.css");
 
-export class TypedMolArt<StructureConfig> {
-    private plugin: StructureViewer<StructureConfig>;
-    private protvistaWrapper: HTMLElement;
+export class MolArt<StructureConfig> {
     private trackManager?: TrackManager;
     private previousWindowWidth: number | undefined = undefined;
     private readonly minWindowWidth = 1500;
@@ -32,13 +30,11 @@ export class TypedMolArt<StructureConfig> {
     public readonly onStructureMouseOn = this.emitOnStructureMouseOn.event;
     private readonly emitOnStructureLoaded = createEmitter<void>();
     public readonly onStructureLoaded = this.emitOnStructureLoaded.event;
-    public init(
-        plugin: StructureViewer<StructureConfig>,
-        targetProtvista: HTMLElement,
+    constructor(
+        private readonly plugin: StructureViewer<StructureConfig>,
+        private readonly nightingaleWrapper: HTMLElement,
         config: Config<StructureConfig>
-    ): void {
-        this.plugin = plugin;
-        this.protvistaWrapper = targetProtvista;
+    ) {
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 if (entry.contentBoxSize[0]) {
@@ -53,8 +49,7 @@ export class TypedMolArt<StructureConfig> {
                 }
             }
         });
-        resizeObserver.observe(this.protvistaWrapper);
-
+        resizeObserver.observe(this.nightingaleWrapper);
         this.loadConfig(config);
         this.plugin.onStructureLoaded.on(() => {
             this.emitOnStructureLoaded.emit();
@@ -84,10 +79,10 @@ export class TypedMolArt<StructureConfig> {
         ) {
             $(this.plugin.getOuterElement())
                 .css("left", "0")
-                .css("top", this.protvistaWrapper.offsetHeight + "px")
+                .css("top", this.nightingaleWrapper.offsetHeight + "px")
                 .css("width", "100%")
                 .css("position", "absolute");
-            $(this.protvistaWrapper).css("width", "100%");
+            $(this.nightingaleWrapper).css("width", "100%");
         } else if (
             windowWidth > this.minWindowWidth &&
             (!this.previousWindowWidth || this.previousWindowWidth <= this.minWindowWidth)
@@ -97,7 +92,7 @@ export class TypedMolArt<StructureConfig> {
                 .css("top", "0")
                 .css("width", "calc(50% - 2px)")
                 .css("position", "fixed");
-            $(this.protvistaWrapper).css("width", "calc(50% - 2px)");
+            $(this.nightingaleWrapper).css("width", "calc(50% - 2px)");
         }
         this.previousWindowWidth = windowWidth;
         this.plugin.handleResize();
@@ -109,9 +104,9 @@ export class TypedMolArt<StructureConfig> {
         this.trackManager?.onFragmentMouseOut.offAll();
         this.trackManager?.onRendered.offAll();
         this.trackManager = TrackManager.createDefault(config.sequence);
-        this.trackManager.onSelectedStructure.on((output) => {
+        this.trackManager.onSelectedStructure.on(async (output) => {
             this.activeChainStructureMapping = output.mapping[output.chain]?.fragmentMappings ?? [];
-            this.plugin.load(
+            await this.plugin.load(
                 output,
                 config.structure,
                 this.trackManager?.getMarkedFragments() ?? []
@@ -133,11 +128,11 @@ export class TypedMolArt<StructureConfig> {
         });
         this.trackManager.onRendered.on(this.windowResize.bind(this)); //TODO tady emitSequenceViewerReady?
         const previousProtvistaManagers =
-            this.protvistaWrapper.getElementsByTagName("protvista-manager");
+            this.nightingaleWrapper.getElementsByTagName("protvista-manager");
         for (let i = 0; i < previousProtvistaManagers.length; i++) {
             previousProtvistaManagers[i].remove();
         }
-        await this.trackManager.render(this.protvistaWrapper);
+        await this.trackManager.render(this.nightingaleWrapper);
     }
 
     public isStructureLoaded(): boolean {

@@ -147,7 +147,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         markedFragments: TrackFragment[],
         isBinary = false,
         assemblyId = ""
-    ) {
+    ): Promise<void> {
         const chainMapping = output.mapping[output.chain];
         if (!chainMapping) {
             throw Error(`No mapping for ${output.pdbId} ${output.chain}`);
@@ -174,8 +174,6 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         const extraHiglightsSelectors: ExtraHiglight[] = [];
         if (extraHighlights && extraHighlights.length > 0) {
             const previousSelect = $(this.target).find(".ma-structure-viewer-header select")[0];
-            console.log("prev sel " + previousSelect);
-            console.log("target " + this.target);
 
             if (previousSelect) {
                 $(previousSelect.parentNode!).remove();
@@ -187,10 +185,6 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
             $(this.target)
                 .find(".ma-structure-viewer-header")
                 .prepend($("<div/>").css("display", "inline-block").append(select));
-            console.log("sel " + select);
-            console.log("target " + this.target);
-            console.log("$target " + $(this.target)[0]);
-            console.log("$target.find " + $(this.target).find(".ma-structure-viewer-header")[0]);
         }
         for (const key in extraHighlights) {
             const extraHighlight = extraHighlights[parseInt(key)];

@@ -1,7 +1,7 @@
 {
-    "name": "typed-molart",
-    "version": "0.0.1",
-    "description": "",
+    "name": "molart",
+    "version": "2.0.0",
+    "description": "MOLeculAR structure annoTator",
     "scripts": {
         "build": "npm run build-webpack",
         "build-webpack": "webpack --mode development",
@@ -24,7 +24,8 @@
         "molstar": "^2.0.7",
         "popper.js": "^1.16.1",
         "ts-typed-events": "^3.0.0",
-        "uniprot-nightingale": "git://github.com/scheuerv/uniprot-nightingale.git"
+        "uniprot-nightingale": "git://github.com/scheuerv/uniprot-nightingale.git",
+        "jquery": "^3.6.0"
     },
     "devDependencies": {
         "@babel/plugin-transform-modules-commonjs": "^7.14.0",

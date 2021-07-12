@@ -115,7 +115,7 @@ function createExampleEntryPoint(name) {
       path: path.resolve(__dirname, `dist/`),
       library: {
         type: 'assign',
-        name: 'TypedMolartExamples'
+        name: 'MolArtExamples'
       }
     },
     externals: {

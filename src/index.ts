@@ -1,4 +1,4 @@
-import { TypedMolArt } from "./molart";
+import { MolArt } from "./molart";
 import MolstarPlugin from "./molstar-plugin";
 
-export { MolstarPlugin, TypedMolArt };
+export { MolstarPlugin, MolArt };
