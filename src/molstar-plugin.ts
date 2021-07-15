@@ -94,11 +94,12 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
             .append($("<i/>").addClass("fas fa-download fa-2x"))
             .prependTo(this.target);
 
-        this.plugin.canvas3d?.interaction.hover.subscribe((e: Canvas3D.HoverEvent) => {
-            const structureElementLoci = getStructureElementLoci(e.current.loci);
+        this.plugin.canvas3d?.interaction.hover.subscribe((event: Canvas3D.HoverEvent) => {
+            const structureElementLoci = getStructureElementLoci(event.current.loci);
             if (this.mouseOverHighlightedResiduesInStructure.length > 0 && !structureElementLoci) {
                 this.emitOnHover.emit(null);
                 this.mouseOverHighlightedResiduesInStructure = [];
+                this.updateHighlight(event);
             } else if (
                 structureElementLoci &&
                 (this.mouseOverHighlightedResiduesInStructure.length == 0 ||
@@ -130,19 +131,23 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
                 };
                 this.mouseOverHighlightedResiduesInStructure = [structureElementLoci];
                 this.emitOnHover.emit(residue);
+                this.updateHighlight(event);
             }
-            const highlights = this.highlightFinderMolstarEvent.calculate(
-                e,
-                this.activeChainStructureMapping
-            );
-            this.highlightedResiduesInStructure.forEach((loci) => {
-                this.plugin.managers.interactivity.lociHighlights.highlight({
-                    loci: loci
-                });
-            });
-            this.emitOnHighlightChange(highlights);
         });
     }
+    private updateHighlight(event: Canvas3D.HoverEvent) {
+        const highlights = this.highlightFinderMolstarEvent.calculate(
+            event,
+            this.activeChainStructureMapping
+        );
+        this.highlightedResiduesInStructure.forEach((loci) => {
+            this.plugin.managers.interactivity.lociHighlights.highlight({
+                loci: loci
+            });
+        });
+        this.emitOnHighlightChange(highlights);
+    }
+
     public getOuterElement(): HTMLElement {
         return this.target;
     }
