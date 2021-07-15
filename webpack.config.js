@@ -110,7 +110,7 @@ function createEntryPoint(name) {
 function createExampleEntryPoint(name) {
   return {
     devtool: "inline-source-map",
-    entry: [path.resolve(__dirname, `src/examples/custom-sequence-structure-mapping.ts`)],
+    entry: [path.resolve(__dirname, `src/examples/custom-sequence-structure-mapping.ts`), path.resolve(__dirname, `src/examples/custom-features.ts`)],
     output: {
       filename: `${name}.js`,
       path: path.resolve(__dirname, `dist/`),
