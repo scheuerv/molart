@@ -4,7 +4,7 @@ import { Highlight } from "uniprot-nightingale/src/types/highlight";
 import { Residue } from "./types/residue";
 
 export default interface StructureViewer<StructureConfig> {
-    onStructureLoaded: SealedEvent<void>;
+    onLoaded: SealedEvent<void>;
     onHover: SealedEvent<Residue | null>;
     onHighlightChange: SealedEvent<Highlight[]>;
     handleResize(): void;
@@ -17,9 +17,9 @@ export default interface StructureViewer<StructureConfig> {
     ): Promise<void>;
     overpaintFragments(fragments: TrackFragment[]): void;
     highlightMouseOverResidue(resNum?: number): void;
-    isStructureLoaded(): boolean;
-    highlightInStructure(resNum: number): void;
-    unhighlightInStructure(): void;
-    focusInStructure(resNum: number, radius: number, chain: string | undefined): void;
+    isLoaded(): boolean;
+    highlight(resNum: number): void;
+    unhighlight(): void;
+    focus(resNum: number, radius: number, chain: string | undefined): void;
     getOuterElement(): HTMLElement;
 }

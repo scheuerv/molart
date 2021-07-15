@@ -35,8 +35,8 @@ describe("HighlightFinderMolstarEvent tests", function () {
         const highlights: Highlight[] = instance.calculate(fakeHoverEvent, mapping);
         expect(highlights).toEqual([
             {
-                end: 5,
-                start: 5
+                sequenceEnd: 5,
+                sequenceStart: 5
             }
         ]);
     });
@@ -106,8 +106,8 @@ describe("HighlightFinderMolstarEvent tests", function () {
         const highlights: Highlight[] = instance.calculate(fakeHoverEvent, mapping);
         expect(highlights).toEqual([
             {
-                end: 11,
-                start: 11
+                sequenceEnd: 11,
+                sequenceStart: 11
             }
         ]);
     });
@@ -131,8 +131,8 @@ describe("HighlightFinderMolstarEvent tests", function () {
         const highlights = instance.calculate(fakeHoverEvent, mapping);
         expect(highlights).toEqual([
             {
-                end: 23,
-                start: 23
+                sequenceEnd: 23,
+                sequenceStart: 23
             }
         ]);
     });

@@ -39,14 +39,15 @@ const sharedConfig = {
           {
             loader: "imports-loader",
             options: {
+              type: "commonjs",
               imports: [
-                {
-                  moduleName: "jquery",
-                  name: "$",
-                },
                 {
                   moduleName: "knockout",
                   name: "ko",
+                },
+                {
+                  moduleName: "jquery",
+                  name: "$",
                 }
               ],
               wrapper: "{jQuery:$, ko:ko}"

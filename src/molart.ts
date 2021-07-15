@@ -2,14 +2,12 @@ import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
 import { Residue } from "./types/residue";
 import $ from "jquery";
 import { Highlight } from "uniprot-nightingale/src/types/highlight";
-import { TrackManager } from "uniprot-nightingale/src/index";
+import { TrackManagerBuilder } from "uniprot-nightingale/src/index";
 import { createEmitter } from "ts-typed-events";
 import StructureViewer from "./structure-viewer";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap";
-import "bootstrap-multiselect";
-import "bootstrap-multiselect/dist/css/bootstrap-multiselect.css";
 import { Config as SequenceConfig } from "uniprot-nightingale/src/types/config";
+import TrackManager from "uniprot-nightingale/src/manager/track-manager";
+import { Output } from "uniprot-nightingale/src/types/accession";
 
 require("./main.css");
 
@@ -51,7 +49,7 @@ export class MolArt<StructureConfig> {
         });
         resizeObserver.observe(this.nightingaleWrapper);
         this.loadConfig(config);
-        this.plugin.onStructureLoaded.on(() => {
+        this.plugin.onLoaded.on(() => {
             this.emitOnStructureLoaded.emit();
         });
         this.plugin.onHover.on((residue: Residue | null) => {
@@ -63,7 +61,7 @@ export class MolArt<StructureConfig> {
         });
         this.plugin.onHighlightChange.on((highlights: Highlight[]) => {
             this.mouseOverHighlightedResidueInSequence =
-                highlights && highlights.length > 0 ? highlights[0].start : undefined;
+                highlights && highlights.length > 0 ? highlights[0].sequenceStart : undefined;
             if (this.highligtedInSequence) {
                 highlights.push(this.highligtedInSequence);
             }
@@ -99,9 +97,18 @@ export class MolArt<StructureConfig> {
     }
 
     public async loadConfig(config: Config<StructureConfig>): Promise<void> {
-        this.trackManager?.onHighlightChange.offAll();
+        const trackManagerBuilder: TrackManagerBuilder = TrackManagerBuilder.createDefault(
+            config.sequence
+        );
+        this.trackManager?.onMarkChange.offAll();
         this.trackManager?.onResidueMouseOver.offAll();
         this.trackManager?.onFragmentMouseOut.offAll();
+        const previousProtvistaManagers =
+            this.nightingaleWrapper.getElementsByTagName("protvista-manager");
+        for (let i = 0; i < previousProtvistaManagers.length; i++) {
+            previousProtvistaManagers[i].remove();
+        }
+        trackManagerBuilder.onRendered.once(() => {
         this.trackManager?.onRendered.offAll();
         this.trackManager = TrackManager.createDefault(config.sequence);
         this.trackManager.onSelectedStructure.on(async (output) => {
@@ -112,8 +119,13 @@ export class MolArt<StructureConfig> {
                 this.trackManager?.getMarkedFragments() ?? []
             );
         });
+        this.trackManager = await trackManagerBuilder.load(this.nightingaleWrapper);
+        this.loadStructureFromOutput(this.trackManager.getActiveOutput(), config);
+        this.trackManager.onSelectedStructure.on(async (output) =>
+            this.loadStructureFromOutput(output, config)
+        );
 
-        this.trackManager.onHighlightChange.on((fragments) => {
+        this.trackManager.onMarkChange.on((fragments) => {
             this.plugin.overpaintFragments(fragments);
         });
         this.trackManager.onResidueMouseOver.on(async (resNum) => {
@@ -126,25 +138,18 @@ export class MolArt<StructureConfig> {
             this.emitOnSequenceMouseOff.emit();
             this.plugin.highlightMouseOverResidue(undefined);
         });
-        this.trackManager.onRendered.on(this.windowResize.bind(this)); //TODO tady emitSequenceViewerReady?
-        const previousProtvistaManagers =
-            this.nightingaleWrapper.getElementsByTagName("protvista-manager");
-        for (let i = 0; i < previousProtvistaManagers.length; i++) {
-            previousProtvistaManagers[i].remove();
-        }
-        await this.trackManager.render(this.nightingaleWrapper);
     }
 
     public isStructureLoaded(): boolean {
-        return this.plugin.isStructureLoaded();
+        return this.plugin.isLoaded();
     }
 
     public highlightInStructure(resNum: number): void {
-        this.plugin.highlightInStructure(resNum);
+        this.plugin.highlight(resNum);
     }
 
     public unhighlightInStructure(): void {
-        this.plugin.unhighlightInStructure();
+        this.plugin.unhighlight();
     }
 
     public unhighlightInSequence(): void {
@@ -153,8 +158,8 @@ export class MolArt<StructureConfig> {
         if (this.mouseOverHighlightedResidueInSequence) {
             this.trackManager?.setHighlights([
                 {
-                    start: this.mouseOverHighlightedResidueInSequence,
-                    end: this.mouseOverHighlightedResidueInSequence
+                    sequenceStart: this.mouseOverHighlightedResidueInSequence,
+                    sequenceEnd: this.mouseOverHighlightedResidueInSequence
                 }
             ]);
         }
@@ -167,15 +172,15 @@ export class MolArt<StructureConfig> {
                 ? [
                       higlight,
                       {
-                          start: this.mouseOverHighlightedResidueInSequence,
-                          end: this.mouseOverHighlightedResidueInSequence
+                          sequenceStart: this.mouseOverHighlightedResidueInSequence,
+                          sequenceEnd: this.mouseOverHighlightedResidueInSequence
                       }
                   ]
                 : [higlight]
         );
     }
     public focusInStructure(resNum: number, radius = 0, chain?: string): void {
-        this.plugin.focusInStructure(resNum, radius, chain);
+        this.plugin.focus(resNum, radius, chain);
     }
     public getStructureController(): StructureViewer<StructureConfig> {
         return this.plugin;
@@ -187,6 +192,19 @@ export class MolArt<StructureConfig> {
         return this.activeChainStructureMapping.map((fragmentMapping) => {
             return [fragmentMapping.sequenceStart, fragmentMapping.sequenceEnd];
         });
+    }
+    private async loadStructureFromOutput(
+        output: Output | undefined,
+        config: Config<StructureConfig>
+    ) {
+        if (output) {
+            this.activeChainStructureMapping = output.mapping[output.chain]?.fragmentMappings ?? [];
+            await this.plugin.load(
+                output,
+                config.structure,
+                this.trackManager?.getMarkedFragments() ?? []
+            );
+        }
     }
 }
 

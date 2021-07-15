@@ -1,3 +1,4 @@
+import { TrackFragment } from "uniprot-nightingale/src/types/accession";
 import { mixFragmentColors } from "../src/fragment-color-mixer";
 describe("FragmentColorMixer tests", function () {
     it("no fragments", async () => {
@@ -5,27 +6,27 @@ describe("FragmentColorMixer tests", function () {
     });
 
     it("two non overlapping fragments", async () => {
-        const trackFragments = [
+        const trackFragments: TrackFragment[] = [
             {
-                start: 5,
-                end: 10,
+                sequenceStart: 5,
+                sequenceEnd: 10,
                 color: "#000000"
             },
             {
-                start: 25,
-                end: 30,
+                sequenceStart: 25,
+                sequenceEnd: 30,
                 color: "#FFFFFF"
             }
         ];
-        const expectedResult = [
+        const expectedResult: TrackFragment[] = [
             {
-                start: 5,
-                end: 10,
+                sequenceStart: 5,
+                sequenceEnd: 10,
                 color: "#000000"
             },
             {
-                start: 25,
-                end: 30,
+                sequenceStart: 25,
+                sequenceEnd: 30,
                 color: "#FFFFFF"
             }
         ];
@@ -33,64 +34,64 @@ describe("FragmentColorMixer tests", function () {
     });
 
     it("two partially overlapping fragments", async () => {
-        const trackFragments = [
+        const trackFragments: TrackFragment[] = [
             {
-                start: 0,
-                end: 10,
+                sequenceStart: 0,
+                sequenceEnd: 10,
                 color: "#FF0000"
             },
             {
-                start: 5,
-                end: 15,
+                sequenceStart: 5,
+                sequenceEnd: 15,
                 color: "#00FF00"
             }
         ];
-        const expectedResult = [
+        const expectedResult: TrackFragment[] = [
             {
-                start: 0,
-                end: 4,
+                sequenceStart: 0,
+                sequenceEnd: 4,
                 color: "#FF0000"
             },
             {
-                start: 5,
-                end: 10,
+                sequenceStart: 5,
+                sequenceEnd: 10,
                 color: "#555500"
             },
             {
-                start: 11,
-                end: 15,
+                sequenceStart: 11,
+                sequenceEnd: 15,
                 color: "#00FF00"
             }
         ];
         expect(mixFragmentColors(trackFragments)).toEqual(expectedResult);
     });
     it("two partially overlapping fragments, same color", async () => {
-        const trackFragments = [
+        const trackFragments: TrackFragment[] = [
             {
-                start: 0,
-                end: 10,
+                sequenceStart: 0,
+                sequenceEnd: 10,
                 color: "#FF0000"
             },
             {
-                start: 5,
-                end: 15,
+                sequenceStart: 5,
+                sequenceEnd: 15,
                 color: "#FF0000"
             }
         ];
-        const expectedResult = [
+        const expectedResult: TrackFragment[] = [
             {
-                start: 0,
-                end: 4,
+                sequenceStart: 0,
+                sequenceEnd: 4,
                 color: "#FF0000"
             },
             {
-                start: 5,
-                end: 10,
+                sequenceStart: 5,
+                sequenceEnd: 10,
                 color: "#FF0000"
             },
             {
-                start: 11,
-                end: 15,
+                sequenceStart: 11,
+                sequenceEnd: 15,
                 color: "#FF0000"
             }
         ];
@@ -98,64 +99,64 @@ describe("FragmentColorMixer tests", function () {
     });
 
     it("three partially overlapping fragments", async () => {
-        const trackFragments = [
+        const trackFragments: TrackFragment[] = [
             {
-                start: 4,
-                end: 50,
+                sequenceStart: 4,
+                sequenceEnd: 50,
                 color: "#FF0000"
             },
             {
-                start: 40,
-                end: 87,
+                sequenceStart: 40,
+                sequenceEnd: 87,
                 color: "#00FF00"
             },
             {
-                start: 25,
-                end: 80,
+                sequenceStart: 25,
+                sequenceEnd: 80,
                 color: "#0000FF"
             }
         ];
-        const expectedResult = [
+        const expectedResult: TrackFragment[] = [
             {
-                start: 4,
-                end: 24,
+                sequenceStart: 4,
+                sequenceEnd: 24,
                 color: "#FF0000"
             },
             {
-                start: 25,
-                end: 39,
+                sequenceStart: 25,
+                sequenceEnd: 39,
                 color: "#550055"
             },
             {
-                start: 40,
-                end: 50,
+                sequenceStart: 40,
+                sequenceEnd: 50,
                 color: "#242524"
             },
             {
-                start: 51,
-                end: 80,
+                sequenceStart: 51,
+                sequenceEnd: 80,
                 color: "#005555"
             },
             {
-                start: 81,
-                end: 87,
+                sequenceStart: 81,
+                sequenceEnd: 87,
                 color: "#00FF00"
             }
         ];
         expect(mixFragmentColors(trackFragments)).toEqual(expectedResult);
     });
     it("invalid color", async () => {
-        const trackFragments = [
+        const trackFragments: TrackFragment[] = [
             {
-                start: 4,
-                end: 50,
+                sequenceStart: 4,
+                sequenceEnd: 50,
                 color: "invalid color"
             }
         ];
-        const expectedResult = [
+        const expectedResult: TrackFragment[] = [
             {
-                start: 4,
-                end: 50,
+                sequenceStart: 4,
+                sequenceEnd: 50,
                 color: "#000000"
             }
         ];
@@ -163,32 +164,32 @@ describe("FragmentColorMixer tests", function () {
     });
 
     it("tests if mixing includes all fragments", async () => {
-        const trackFragments1 = [
+        const trackFragments1: TrackFragment[] = [
             {
-                start: 0,
-                end: 50,
+                sequenceStart: 0,
+                sequenceEnd: 50,
                 color: "#FF0000"
             },
             {
-                start: 0,
-                end: 50,
+                sequenceStart: 0,
+                sequenceEnd: 50,
                 color: "#00FF00"
             }
         ];
-        const trackFragments2 = [
+        const trackFragments2: TrackFragment[] = [
             {
-                start: 0,
-                end: 50,
+                sequenceStart: 0,
+                sequenceEnd: 50,
                 color: "#FF0000"
             },
             {
-                start: 0,
-                end: 50,
+                sequenceStart: 0,
+                sequenceEnd: 50,
                 color: "#00FF00"
             },
             {
-                start: 0,
-                end: 50,
+                sequenceStart: 0,
+                sequenceEnd: 50,
                 color: "#0000FF"
             }
         ];

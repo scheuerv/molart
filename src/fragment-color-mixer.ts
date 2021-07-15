@@ -7,27 +7,29 @@ export function mixFragmentColors(fragments: TrackFragment[]): TrackFragment[] {
     const mixedColorFragments: TrackFragment[] = [];
     if (fragments.length > 0) {
         const sortedFragments = fragments.sort((a, b) => {
-            return a.start - b.start;
+            return a.sequenceStart - b.sequenceStart;
         });
-        let lastStart: number = sortedFragments[0].start;
+        let lastStart: number = sortedFragments[0].sequenceStart;
         let [openedFragments, nextId] = getStartsWith(lastStart, sortedFragments);
         while (nextId < sortedFragments.length || openedFragments.length > 0) {
             const nearestEnd = getNearestEnd(openedFragments);
-            const nearestStart = sortedFragments[nextId]?.start
-                ? sortedFragments[nextId]?.start - 1
+            const nearestStart = sortedFragments[nextId]?.sequenceStart
+                ? sortedFragments[nextId]?.sequenceStart - 1
                 : nearestEnd;
             if (nearestEnd < nearestStart) {
                 mixedColorFragments.push({
-                    start: lastStart,
-                    end: nearestEnd,
+                    sequenceStart: lastStart,
+                    sequenceEnd: nearestEnd,
                     color: mixColor(openedFragments)
                 });
-                openedFragments = openedFragments.filter((fragment) => fragment.end != nearestEnd);
+                openedFragments = openedFragments.filter(
+                    (fragment) => fragment.sequenceEnd != nearestEnd
+                );
                 lastStart = nearestEnd + 1;
             } else if (nearestEnd > nearestStart) {
                 mixedColorFragments.push({
-                    start: lastStart,
-                    end: nearestStart,
+                    sequenceStart: lastStart,
+                    sequenceEnd: nearestStart,
                     color: mixColor(openedFragments)
                 });
                 let newFragments: TrackFragment[];
@@ -36,18 +38,20 @@ export function mixFragmentColors(fragments: TrackFragment[]): TrackFragment[] {
                 lastStart = nearestStart + 1;
             } else {
                 mixedColorFragments.push({
-                    start: lastStart,
-                    end: nearestStart,
+                    sequenceStart: lastStart,
+                    sequenceEnd: nearestStart,
                     color: mixColor(openedFragments)
                 });
                 let newFragments: TrackFragment[];
                 [newFragments, nextId] = getStartsWith(nearestStart + 1, sortedFragments);
                 openedFragments = openedFragments.concat(newFragments);
-                openedFragments = openedFragments.filter((fragment) => fragment.end != nearestEnd);
+                openedFragments = openedFragments.filter(
+                    (fragment) => fragment.sequenceEnd != nearestEnd
+                );
                 lastStart = nearestStart + 1;
             }
             if (openedFragments.length == 0 && nextId < sortedFragments.length) {
-                lastStart = sortedFragments[nextId].start;
+                lastStart = sortedFragments[nextId].sequenceStart;
                 let newFragments: TrackFragment[];
                 [newFragments, nextId] = getStartsWith(lastStart, sortedFragments);
                 openedFragments = openedFragments.concat(newFragments);
@@ -55,12 +59,12 @@ export function mixFragmentColors(fragments: TrackFragment[]): TrackFragment[] {
                     while (openedFragments.length != 0) {
                         const nearestEnd = getNearestEnd(openedFragments);
                         mixedColorFragments.push({
-                            start: lastStart,
-                            end: nearestEnd,
+                            sequenceStart: lastStart,
+                            sequenceEnd: nearestEnd,
                             color: mixColor(openedFragments)
                         });
                         openedFragments = openedFragments.filter(
-                            (fragment) => fragment.end != nearestEnd
+                            (fragment) => fragment.sequenceEnd != nearestEnd
                         );
                         lastStart = nearestEnd + 1;
                     }
@@ -75,9 +79,9 @@ function getStartsWith(start: number, sortedFragments: TrackFragment[]): [TrackF
     const newFragments: TrackFragment[] = [];
     for (let i = 0; i < sortedFragments.length; i++) {
         const fragment = sortedFragments[i];
-        if (fragment.start == start) {
+        if (fragment.sequenceStart == start) {
             newFragments.push(fragment);
-        } else if (fragment.start > start) {
+        } else if (fragment.sequenceStart > start) {
             return [newFragments, i];
         }
     }
@@ -91,8 +95,8 @@ function getNearestEnd(openedFragments: TrackFragment[]): number {
     let minEnd: number = Number.MAX_SAFE_INTEGER;
     for (let i = 0; i < openedFragments.length; i++) {
         const fragment: TrackFragment = openedFragments[i];
-        if (fragment.end < minEnd) {
-            minEnd = fragment.end;
+        if (fragment.sequenceEnd < minEnd) {
+            minEnd = fragment.sequenceEnd;
         }
     }
     return minEnd;

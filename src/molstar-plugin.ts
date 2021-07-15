@@ -26,6 +26,10 @@ import { mixFragmentColors } from "./fragment-color-mixer";
 import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
 import HighlightFinderNightingaleEvent from "./highlight-finder-nightingale-event";
 import $ from "jquery";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap";
+import "bootstrap-multiselect";
+import "bootstrap-multiselect/dist/css/bootstrap-multiselect.css";
 import { Residue } from "./types/residue";
 import { Highlight } from "uniprot-nightingale/src/types/highlight";
 import StructureViewer from "./structure-viewer";
@@ -54,7 +58,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
     private cartoonRepr?: StateObjectSelector;
     private activeChainStructureMapping: FragmentMapping[];
     private readonly emitOnStructureLoaded = createEmitter<void>();
-    public readonly onStructureLoaded = this.emitOnStructureLoaded.event;
+    public readonly onLoaded = this.emitOnStructureLoaded.event;
 
     private readonly highlightFinderNightingaleEvent: HighlightFinderNightingaleEvent =
         new HighlightFinderNightingaleEvent();
@@ -424,11 +428,11 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         this.plugin.handleResize();
     }
 
-    public isStructureLoaded(): boolean {
+    public isLoaded(): boolean {
         return !!this.cartoonRepr;
     }
 
-    public focusInStructure(resNum: number, radius = 0, chain?: string): void {
+    public focus(resNum: number, radius = 0, chain?: string): void {
         const locis = this.findLocisFromResidueNumber(resNum, chain);
         if (locis[0]) {
             this.plugin.managers.structure.focus.setFromLoci(locis[0]);
@@ -436,14 +440,13 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         }
     }
 
-    public highlightInStructure(resNum: number): void {
+    public highlight(resNum: number): void {
         this.highlightedResiduesInStructure = this.findLocisFromResidueNumber(resNum);
         this.highlightStructureResidues();
     }
 
-    public unhighlightInStructure(): void {
+    public unhighlight(): void {
         this.highlightedResiduesInStructure = [];
-        this.plugin.managers.interactivity.lociHighlights.clearHighlights();
         this.plugin.managers.interactivity.lociHighlights.clearHighlights();
         this.mouseOverHighlightedResiduesInStructure.forEach((loci) => {
             this.plugin.managers.interactivity.lociHighlights.highlight({
@@ -458,8 +461,8 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         if (!data) return;
         const params: { bundle: StructureElement.Bundle; color: Color; clear: boolean }[] = [];
         mixFragmentColors(fragments).forEach((fragment) => {
-            let fragmentStart = fragment.start;
-            let fragmentEnd = fragment.end;
+            let fragmentStart = fragment.sequenceStart;
+            let fragmentEnd = fragment.sequenceEnd;
             const minMappedResidue = Math.min(
                 ...this.activeChainStructureMapping.map((mapping) => {
                     return mapping.sequenceStart;

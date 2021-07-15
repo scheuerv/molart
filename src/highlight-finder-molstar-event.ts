@@ -28,7 +28,7 @@ export default class HighlightFinderMolstarEvent {
         if (labelSeqId) {
             const position = this.getPosition(labelSeqId, structureMapping);
             if (position) {
-                result.push({ start: position, end: position });
+                result.push({ sequenceStart: position, sequenceEnd: position });
             }
         }
         return result;
