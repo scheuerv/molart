@@ -155,9 +155,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
     public async load(
         output: Output,
         config: MolstarStructureConfig,
-        markedFragments: TrackFragment[],
-        isBinary = false,
-        assemblyId = ""
+        markedFragments: TrackFragment[]
     ): Promise<void> {
         const chainMapping = output.mapping[output.chain];
         if (!chainMapping) {
@@ -168,18 +166,13 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         this.molecularSurfaceRepr = undefined;
         this.cartoonRepr = undefined;
         await this.plugin.clear();
-        const loadedData: StateObjectSelector = await this.loadData(output, isBinary);
+        const loadedData: StateObjectSelector = await this.loadData(output);
         const trajectory = await this.plugin.builders.structure.parseTrajectory(
             loadedData,
             output.format
         );
         const model = await this.plugin.builders.structure.createModel(trajectory);
-        this.structure = await this.plugin.builders.structure.createStructure(
-            model,
-            assemblyId
-                ? { name: "assembly", params: { id: assemblyId } }
-                : { name: "model", params: {} }
-        );
+        this.structure = await this.plugin.builders.structure.createStructure(model);
         let select: HTMLSelectElement | undefined;
         const extraHighlights = config.extrahighlights;
         const extraHiglightsSelectors: ExtraHiglight[] = [];
@@ -399,13 +392,12 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         }
     }
 
-    private async loadData(output: Output, isBinary: boolean): Promise<StateObjectSelector> {
+    private async loadData(output: Output): Promise<StateObjectSelector> {
         let loadedData: StateObjectSelector;
         if (output.url) {
             loadedData = await this.plugin.builders.data.download(
                 {
-                    url: Asset.Url(output.url),
-                    isBinary
+                    url: Asset.Url(output.url)
                 },
                 { state: { isGhost: true } }
             );
