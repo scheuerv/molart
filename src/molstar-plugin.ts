@@ -6,6 +6,7 @@ import { createPlugin } from "Molstar/mol-plugin-ui";
 import { DefaultPluginUISpec } from "Molstar/mol-plugin-ui/spec";
 import { createEmitter } from "ts-typed-events";
 import HighlightFinderMolstarEvent, {
+    MolstarAuthSeqIdExtractor,
     MolstarLabelSeqIdExtractor
 } from "./highlight-finder-molstar-event";
 import { getStructureElementLoci } from "./molstar-utils";
@@ -44,8 +45,10 @@ type ExtraHiglight = {
 };
 
 export default class MolstarPlugin implements StructureViewer<MolstarStructureConfig> {
-    private readonly highlightFinderMolstarEvent: HighlightFinderMolstarEvent =
-        new HighlightFinderMolstarEvent(new MolstarLabelSeqIdExtractor());
+    private highlightFinderMolstarEvent: Record<string, HighlightFinderMolstarEvent> = {
+        auth: new HighlightFinderMolstarEvent(new MolstarAuthSeqIdExtractor()),
+        label: new HighlightFinderMolstarEvent(new MolstarLabelSeqIdExtractor())
+    };
     private plugin: PluginContext;
     private readonly emitOnHover = createEmitter<Residue | null>();
     public readonly onHover = this.emitOnHover.event;
@@ -136,16 +139,18 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         });
     }
     private updateHighlight(event: Canvas3D.HoverEvent) {
-        const highlights = this.highlightFinderMolstarEvent.calculate(
-            event,
-            this.activeChainStructureMapping
-        );
-        this.highlightedResiduesInStructure.forEach((loci) => {
-            this.plugin.managers.interactivity.lociHighlights.highlight({
-                loci: loci
+        if (this.output) {
+            const highlights = this.highlightFinderMolstarEvent[this.output.idType].calculate(
+                event,
+                this.activeChainStructureMapping
+            );
+            this.highlightedResiduesInStructure.forEach((loci) => {
+                this.plugin.managers.interactivity.lociHighlights.highlight({
+                    loci: loci
+                });
             });
-        });
-        this.emitOnHighlightChange(highlights);
+            this.emitOnHighlightChange(highlights);
+        }
     }
 
     public getOuterElement(): HTMLElement {
@@ -283,12 +288,12 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
                 const chainExpressions = chainMapping.fragmentMappings.map((fragment) => {
                     return MolScriptBuilder.core.logic.and([
                         MolScriptBuilder.core.rel.inRange([
-                            MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id(),
+                            this.getFilterTypeSeq(),
                             fragment.structureStart,
                             fragment.structureEnd
                         ]),
                         MolScriptBuilder.core.rel.eq([
-                            MolScriptBuilder.struct.atomProperty.macromolecular.label_asym_id(),
+                            this.getFilterTypeAsym(),
                             this.output?.format == "mmcif" ? chainMapping.structAsymId : chainId
                         ])
                     ]);
@@ -522,24 +527,45 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         });
     }
 
-    private selectFragment(from: number, to: number, data: Structure, chain?: string) {
+    private selectFragment(
+        from: number,
+        to: number,
+        data: Structure,
+        chain?: string
+    ): StructureSelection {
         const filter: Record<string, Expression> = {
-            "residue-test": MolScriptBuilder.core.rel.inRange([
-                MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id(),
-                from,
-                to
-            ])
+            "residue-test": MolScriptBuilder.core.rel.inRange([this.getFilterTypeSeq(), from, to])
         };
         if (chain) {
-            filter["chain-test"] = MolScriptBuilder.core.rel.eq([
-                MolScriptBuilder.struct.atomProperty.macromolecular.label_asym_id(),
-                chain
-            ]);
+            filter["chain-test"] = MolScriptBuilder.core.rel.eq([this.getFilterTypeAsym(), chain]);
         }
         return Script.getStructureSelection(
             MolScriptBuilder.struct.generator.atomGroups(filter),
             data
         );
+    }
+
+    private getFilterTypeSeq() {
+        if (this.output) {
+            switch (this.output.idType) {
+                case "label":
+                    return MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id();
+                case "auth":
+                    return MolScriptBuilder.struct.atomProperty.macromolecular.auth_seq_id();
+            }
+        }
+        throw new Error("No output or unknown id type");
+    }
+    private getFilterTypeAsym() {
+        if (this.output) {
+            switch (this.output.idType) {
+                case "label":
+                    return MolScriptBuilder.struct.atomProperty.macromolecular.label_asym_id();
+                case "auth":
+                    return MolScriptBuilder.struct.atomProperty.macromolecular.auth_asym_id();
+            }
+        }
+        throw new Error("No output or unknown id type");
     }
 
     private findLocisFromResidueNumber(resNum: number, chain?: string): StructureElement.Loci[] {

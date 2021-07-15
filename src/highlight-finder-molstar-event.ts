@@ -4,11 +4,11 @@ import { getStructureElementLoci } from "./molstar-utils";
 import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
 import { Highlight } from "uniprot-nightingale/src/types/highlight";
 
-export interface LabelSeqIdExtractor {
-    extractLabelSeqId(e: Canvas3D.HoverEvent): number | undefined;
+export interface SeqIdExtractor {
+    extractSeqId(e: Canvas3D.HoverEvent): number | undefined;
 }
-export class MolstarLabelSeqIdExtractor implements LabelSeqIdExtractor {
-    public extractLabelSeqId(e: Canvas3D.HoverEvent): number | undefined {
+export class MolstarLabelSeqIdExtractor implements SeqIdExtractor {
+    public extractSeqId(e: Canvas3D.HoverEvent): number | undefined {
         const structureElementLoci = getStructureElementLoci(e.current?.loci);
         if (structureElementLoci) {
             const structureElement = StructureElement.Stats.ofLoci(structureElementLoci);
@@ -19,14 +19,26 @@ export class MolstarLabelSeqIdExtractor implements LabelSeqIdExtractor {
         }
     }
 }
+export class MolstarAuthSeqIdExtractor implements SeqIdExtractor {
+    public extractSeqId(e: Canvas3D.HoverEvent): number | undefined {
+        const structureElementLoci = getStructureElementLoci(e.current?.loci);
+        if (structureElementLoci) {
+            const structureElement = StructureElement.Stats.ofLoci(structureElementLoci);
+            const location = structureElement.firstElementLoc;
+            if (location.unit) {
+                return StructureProperties.residue.auth_seq_id(location);
+            }
+        }
+    }
+}
 export default class HighlightFinderMolstarEvent {
-    constructor(private readonly labelSeqIdExtractor: LabelSeqIdExtractor) {}
+    constructor(private readonly seqIdExtractor: SeqIdExtractor) {}
 
     public calculate(e: Canvas3D.HoverEvent, structureMapping: FragmentMapping[]): Highlight[] {
         const result: Highlight[] = [];
-        const labelSeqId = this.labelSeqIdExtractor.extractLabelSeqId(e);
-        if (labelSeqId) {
-            const position = this.getPosition(labelSeqId, structureMapping);
+        const seqId = this.seqIdExtractor.extractSeqId(e);
+        if (seqId) {
+            const position = this.getPosition(seqId, structureMapping);
             if (position) {
                 result.push({ sequenceStart: position, sequenceEnd: position });
             }

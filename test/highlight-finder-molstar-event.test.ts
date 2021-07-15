@@ -1,6 +1,4 @@
-import HighlightFinderMolstarEvent, {
-    LabelSeqIdExtractor
-} from "../src/highlight-finder-molstar-event";
+import HighlightFinderMolstarEvent, { SeqIdExtractor } from "../src/highlight-finder-molstar-event";
 import { Representation } from "Molstar/mol-repr/representation";
 import { ModifiersKeys } from "Molstar/mol-util/input/input-observer";
 import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
@@ -15,10 +13,10 @@ describe("HighlightFinderMolstarEvent tests", function () {
         button: 0
     };
     let instance: HighlightFinderMolstarEvent;
-    let fakeExtractor: FakeAuthSeqIdExtractor;
+    let fakeExtractor: FakeSeqIdExtractor;
 
     beforeEach(() => {
-        fakeExtractor = new FakeAuthSeqIdExtractor();
+        fakeExtractor = new FakeSeqIdExtractor();
         instance = new HighlightFinderMolstarEvent(fakeExtractor);
     });
 
@@ -138,9 +136,9 @@ describe("HighlightFinderMolstarEvent tests", function () {
     });
 });
 
-class FakeAuthSeqIdExtractor implements LabelSeqIdExtractor {
+class FakeSeqIdExtractor implements SeqIdExtractor {
     fakePosition: number | undefined;
-    extractLabelSeqId(): number | undefined {
+    extractSeqId(): number | undefined {
         return this.fakePosition;
     }
 }
