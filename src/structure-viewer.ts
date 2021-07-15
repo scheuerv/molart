@@ -18,8 +18,8 @@ export default interface StructureViewer<StructureConfig> {
     overpaintFragments(fragments: TrackFragment[]): void;
     highlightMouseOverResidue(resNum?: number): void;
     isLoaded(): boolean;
-    highlight(resNum: number): void;
+    highlight(resNum: number, chain?: string): void;
     unhighlight(): void;
-    focus(resNum: number, radius: number, chain: string | undefined): void;
+    focus(resNum: number, chain?: string, radius?: number): void;
     getOuterElement(): HTMLElement;
 }

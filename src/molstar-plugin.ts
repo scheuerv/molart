@@ -57,8 +57,8 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
     private molecularSurfaceRepr?: StateObjectSelector;
     private cartoonRepr?: StateObjectSelector;
     private activeChainStructureMapping: FragmentMapping[];
-    private readonly emitOnStructureLoaded = createEmitter<void>();
-    public readonly onLoaded = this.emitOnStructureLoaded.event;
+    private readonly emitOnLoaded = createEmitter<void>();
+    public readonly onLoaded = this.emitOnLoaded.event;
 
     private readonly highlightFinderNightingaleEvent: HighlightFinderNightingaleEvent =
         new HighlightFinderNightingaleEvent();
@@ -273,7 +273,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         this.setTransparency(this.slider?.value);
         this.overpaintFragments(markedFragments);
         if (loaded) {
-            this.emitOnStructureLoaded.emit();
+            this.emitOnLoaded.emit();
         }
     }
     private async createRepresentations() {
@@ -432,7 +432,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         return !!this.cartoonRepr;
     }
 
-    public focus(resNum: number, radius = 0, chain?: string): void {
+    public focus(resNum: number, chain?: string, radius = 0): void {
         const locis = this.findLocisFromResidueNumber(resNum, chain);
         if (locis[0]) {
             this.plugin.managers.structure.focus.setFromLoci(locis[0]);
@@ -440,8 +440,8 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         }
     }
 
-    public highlight(resNum: number): void {
-        this.highlightedResiduesInStructure = this.findLocisFromResidueNumber(resNum);
+    public highlight(resNum: number, chain?: string): void {
+        this.highlightedResiduesInStructure = this.findLocisFromResidueNumber(resNum, chain);
         this.highlightStructureResidues();
     }
 

@@ -28,6 +28,8 @@ export class MolArt<StructureConfig> {
     public readonly onStructureMouseOn = this.emitOnStructureMouseOn.event;
     private readonly emitOnStructureLoaded = createEmitter<void>();
     public readonly onStructureLoaded = this.emitOnStructureLoaded.event;
+    private readonly emitOnSequenceViewerReady = createEmitter<void>();
+    public readonly onSequenceViewerReady = this.emitOnSequenceViewerReady.event;
     constructor(
         private readonly plugin: StructureViewer<StructureConfig>,
         private readonly nightingaleWrapper: HTMLElement,
@@ -69,32 +71,6 @@ export class MolArt<StructureConfig> {
         });
         window.addEventListener("resize", this.windowResize.bind(this));
     }
-    private windowResize() {
-        const windowWidth = window.innerWidth;
-        if (
-            windowWidth <= this.minWindowWidth &&
-            (!this.previousWindowWidth || this.previousWindowWidth > this.minWindowWidth)
-        ) {
-            $(this.plugin.getOuterElement())
-                .css("left", "0")
-                .css("top", this.nightingaleWrapper.offsetHeight + "px")
-                .css("width", "100%")
-                .css("position", "absolute");
-            $(this.nightingaleWrapper).css("width", "100%");
-        } else if (
-            windowWidth > this.minWindowWidth &&
-            (!this.previousWindowWidth || this.previousWindowWidth <= this.minWindowWidth)
-        ) {
-            $(this.plugin.getOuterElement())
-                .css("left", "50%")
-                .css("top", "0")
-                .css("width", "calc(50% - 2px)")
-                .css("position", "fixed");
-            $(this.nightingaleWrapper).css("width", "calc(50% - 2px)");
-        }
-        this.previousWindowWidth = windowWidth;
-        this.plugin.handleResize();
-    }
 
     public async loadConfig(config: Config<StructureConfig>): Promise<void> {
         const trackManagerBuilder: TrackManagerBuilder = TrackManagerBuilder.createDefault(
@@ -109,15 +85,8 @@ export class MolArt<StructureConfig> {
             previousProtvistaManagers[i].remove();
         }
         trackManagerBuilder.onRendered.once(() => {
-        this.trackManager?.onRendered.offAll();
-        this.trackManager = TrackManager.createDefault(config.sequence);
-        this.trackManager.onSelectedStructure.on(async (output) => {
-            this.activeChainStructureMapping = output.mapping[output.chain]?.fragmentMappings ?? [];
-            await this.plugin.load(
-                output,
-                config.structure,
-                this.trackManager?.getMarkedFragments() ?? []
-            );
+            this.windowResize.bind(this)();
+            this.emitOnSequenceViewerReady.emit();
         });
         this.trackManager = await trackManagerBuilder.load(this.nightingaleWrapper);
         this.loadStructureFromOutput(this.trackManager.getActiveOutput(), config);
@@ -144,8 +113,8 @@ export class MolArt<StructureConfig> {
         return this.plugin.isLoaded();
     }
 
-    public highlightInStructure(resNum: number): void {
-        this.plugin.highlight(resNum);
+    public highlightInStructure(resNum: number, chain?: string): void {
+        this.plugin.highlight(resNum, chain);
     }
 
     public unhighlightInStructure(): void {
@@ -180,7 +149,7 @@ export class MolArt<StructureConfig> {
         );
     }
     public focusInStructure(resNum: number, radius = 0, chain?: string): void {
-        this.plugin.focus(resNum, radius, chain);
+        this.plugin.focus(resNum, chain, radius);
     }
     public getStructureController(): StructureViewer<StructureConfig> {
         return this.plugin;
@@ -205,6 +174,32 @@ export class MolArt<StructureConfig> {
                 this.trackManager?.getMarkedFragments() ?? []
             );
         }
+    }
+    private windowResize() {
+        const windowWidth = window.innerWidth;
+        if (
+            windowWidth <= this.minWindowWidth &&
+            (!this.previousWindowWidth || this.previousWindowWidth > this.minWindowWidth)
+        ) {
+            $(this.plugin.getOuterElement())
+                .css("left", "0")
+                .css("top", this.nightingaleWrapper.offsetHeight + "px")
+                .css("width", "100%")
+                .css("position", "absolute");
+            $(this.nightingaleWrapper).css("width", "100%");
+        } else if (
+            windowWidth > this.minWindowWidth &&
+            (!this.previousWindowWidth || this.previousWindowWidth <= this.minWindowWidth)
+        ) {
+            $(this.plugin.getOuterElement())
+                .css("left", "50%")
+                .css("top", "0")
+                .css("width", "calc(50% - 2px)")
+                .css("position", "fixed");
+            $(this.nightingaleWrapper).css("width", "calc(50% - 2px)");
+        }
+        this.previousWindowWidth = windowWidth;
+        this.plugin.handleResize();
     }
 }
 
