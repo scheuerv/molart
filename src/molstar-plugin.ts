@@ -101,11 +101,12 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
                 this.mouseOverHighlightedResiduesInStructure = [];
             } else if (
                 structureElementLoci &&
-                this.mouseOverHighlightedResiduesInStructure.length == 1 &&
-                !StructureElement.Loci.areEqual(
-                    this.mouseOverHighlightedResiduesInStructure[0],
-                    structureElementLoci
-                )
+                (this.mouseOverHighlightedResiduesInStructure.length == 0 ||
+                    (this.mouseOverHighlightedResiduesInStructure.length == 1 &&
+                        !StructureElement.Loci.areEqual(
+                            this.mouseOverHighlightedResiduesInStructure[0],
+                            structureElementLoci
+                        )))
             ) {
                 const structureElement = StructureElement.Stats.ofLoci(structureElementLoci);
                 const location = structureElement.firstElementLoc;
@@ -127,6 +128,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
                         index: StructureProperties.chain.key(location)
                     }
                 };
+                this.mouseOverHighlightedResiduesInStructure = [structureElementLoci];
                 this.emitOnHover.emit(residue);
             }
             const highlights = this.highlightFinderMolstarEvent.calculate(
