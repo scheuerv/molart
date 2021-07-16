@@ -44,11 +44,12 @@ type ExtraHiglight = {
     readonly key: string;
 };
 
-export default class MolstarPlugin implements StructureViewer<MolstarStructureConfig> {
+export default class MolstarPlugin implements StructureViewer<MolstarPluginConfig> {
     private highlightFinderMolstarEvent: Record<string, HighlightFinderMolstarEvent> = {
         auth: new HighlightFinderMolstarEvent(new MolstarAuthSeqIdExtractor()),
         label: new HighlightFinderMolstarEvent(new MolstarLabelSeqIdExtractor())
     };
+    private readonly selectedHighlights: Set<string> = new Set();
     private plugin: PluginContext;
     private readonly emitOnHover = createEmitter<Residue | undefined>();
     public readonly onHover = this.emitOnHover.event;
@@ -159,7 +160,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
 
     public async load(
         output: Output,
-        config: MolstarStructureConfig,
+        config: MolstarPluginConfig,
         markedFragments: TrackFragment[]
     ): Promise<void> {
         const chainMapping = output.mapping[output.chain];
@@ -179,7 +180,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         const model = await this.plugin.builders.structure.createModel(trajectory);
         this.structure = await this.plugin.builders.structure.createStructure(model);
         let select: HTMLSelectElement | undefined;
-        const extraHighlights = config.extrahighlights;
+        const extraHighlights = config.extraHighlights;
         const extraHiglightsSelectors: ExtraHiglight[] = [];
         if (extraHighlights && extraHighlights.length > 0) {
             const previousSelect = $(this.target).find(".ma-structure-viewer-header select")[0];
@@ -196,31 +197,33 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
                 .prepend($("<div/>").css("display", "inline-block").append(select));
         }
         for (const key in extraHighlights) {
+            const highlightKey = `extra-highlight-${key}`;
             const extraHighlight = extraHighlights[parseInt(key)];
             $(select!).append(
                 $("<option/>")
                     .attr("value", key)
-                    .attr("selected", "selected")
+                    .prop("selected", this.selectedHighlights.has(highlightKey))
                     .text(extraHighlight.label)
             );
+
             const filter: Record<string, Expression> = {};
             if (extraHighlight.residue) {
                 filter["residue-test"] = MolScriptBuilder.core.rel.inRange([
-                    MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id(),
-                    extraHighlight.residue.labelResidueNumFrom,
-                    extraHighlight.residue.labelResidueNumTo
+                    this.getFilterTypeSeq(),
+                    extraHighlight.residue.residueNumFrom,
+                    extraHighlight.residue.residueNumTo
                 ]);
             }
-            if (extraHighlight.labelChain) {
+            if (extraHighlight.chain) {
                 filter["chain-test"] = MolScriptBuilder.core.set.has([
-                    MolScriptBuilder.core.type.set(extraHighlight.labelChain),
-                    MolScriptBuilder.ammp("label_asym_id")
+                    MolScriptBuilder.core.type.set(extraHighlight.chain),
+                    this.getFilterTypeAsym()
                 ]);
             }
-            if (extraHighlight.labelAtom) {
+            if (extraHighlight.atom) {
                 filter["atom-test"] = MolScriptBuilder.core.set.has([
-                    MolScriptBuilder.core.type.set(extraHighlight.labelAtom),
-                    MolScriptBuilder.ammp("label_atom_id")
+                    MolScriptBuilder.core.type.set(extraHighlight.atom),
+                    this.getFilterTypeAtom()
                 ]);
             }
             const expression = MolScriptBuilder.struct.generator.atomGroups(filter);
@@ -228,19 +231,21 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
                 await this.plugin.builders.structure.tryCreateComponentFromExpression(
                     this.structure,
                     expression,
-                    `extra-highlight-${key}`
+                    highlightKey
                 );
             extraHiglightsSelectors.push({
                 selector: highlightComponent!,
-                isVisible: true,
+                isVisible: this.selectedHighlights.has(highlightKey),
                 props: extraHighlight.props,
                 expression: expression,
-                key: `extra-highlight-${key}`
+                key: highlightKey
             });
-            await this.plugin.builders.structure.representation.addRepresentation(
-                highlightComponent!,
-                extraHighlight.props
-            );
+            if (this.selectedHighlights.has(highlightKey)) {
+                await this.plugin.builders.structure.representation.addRepresentation(
+                    highlightComponent!,
+                    extraHighlight.props
+                );
+            }
         }
         if (extraHighlights && extraHighlights.length > 0) {
             if (select) {
@@ -252,6 +257,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
                         const extraHighlight =
                             extraHiglightsSelectors[parseInt($(option).val() as string)];
                         if (!extraHighlight.isVisible && checked) {
+                            this.selectedHighlights.add(extraHighlight.key);
                             const highlightComponent =
                                 await this.plugin.builders.structure.tryCreateComponentFromExpression(
                                     this.structure,
@@ -265,6 +271,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
                             );
                             extraHighlight.isVisible = true;
                         } else if (extraHighlight.isVisible && !checked) {
+                            this.selectedHighlights.delete(extraHighlight.key);
                             const update = this.plugin.build();
                             update.delete(extraHighlight.selector);
                             update.commit();
@@ -567,6 +574,17 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         }
         throw new Error("No output or unknown id type");
     }
+    private getFilterTypeAtom() {
+        if (this.output) {
+            switch (this.output.idType) {
+                case "label":
+                    return MolScriptBuilder.struct.atomProperty.macromolecular.label_atom_id();
+                case "auth":
+                    return MolScriptBuilder.struct.atomProperty.macromolecular.auth_atom_id();
+            }
+        }
+        throw new Error("No output or unknown id type");
+    }
 
     private findLocisFromResidueNumber(resNum: number, chain?: string): StructureElement.Loci[] {
         const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
@@ -630,15 +648,15 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
     }
 }
 
-export type MolstarStructureConfig = {
-    extrahighlights: {
+export type MolstarPluginConfig = {
+    extraHighlights: {
         label: string;
         props: StructureRepresentationBuiltInProps;
         residue?: {
-            labelResidueNumFrom: number;
-            labelResidueNumTo: number;
+            residueNumFrom: number;
+            residueNumTo: number;
         };
-        labelChain?: string[];
-        labelAtom?: string[];
+        chain?: string[];
+        atom?: string[];
     }[];
 };
