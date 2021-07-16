@@ -31,7 +31,7 @@ export class MolArt<StructureConfig> {
     private readonly emitOnSequenceViewerReady = createEmitter<void>();
     public readonly onSequenceViewerReady = this.emitOnSequenceViewerReady.event;
     constructor(
-        private readonly plugin: StructureViewer<StructureConfig>,
+        private readonly structureViewer: StructureViewer<StructureConfig>,
         private readonly nightingaleWrapper: HTMLElement,
         config: Config<StructureConfig>
     ) {
@@ -42,7 +42,7 @@ export class MolArt<StructureConfig> {
                         this.previousWindowWidth &&
                         this.previousWindowWidth <= this.minWindowWidth
                     ) {
-                        $(this.plugin.getOuterElement())
+                        $(this.structureViewer.getOuterElement())
                             .css("top", entry.contentBoxSize[0].blockSize + "px")
                             .css("position", "absolute");
                     }
@@ -51,17 +51,17 @@ export class MolArt<StructureConfig> {
         });
         resizeObserver.observe(this.nightingaleWrapper);
         this.loadConfig(config);
-        this.plugin.onLoaded.on(() => {
+        this.structureViewer.onLoaded.on(() => {
             this.emitOnStructureLoaded.emit();
         });
-        this.plugin.onHover.on((residue: Residue | null) => {
+        this.structureViewer.onHover.on((residue: Residue | undefined) => {
             if (residue) {
                 this.emitOnStructureMouseOn.emit(residue);
             } else {
                 this.emitOnStructureMouseOff();
             }
         });
-        this.plugin.onHighlightChange.on((highlights: Highlight[]) => {
+        this.structureViewer.onHighlightChange.on((highlights: Highlight[]) => {
             this.mouseOverHighlightedResidueInSequence =
                 highlights && highlights.length > 0 ? highlights[0].sequenceStart : undefined;
             if (this.highligtedInSequence) {
@@ -95,30 +95,30 @@ export class MolArt<StructureConfig> {
         );
 
         this.trackManager.onMarkChange.on((fragments) => {
-            this.plugin.overpaintFragments(fragments);
+            this.structureViewer.overpaintFragments(fragments);
         });
         this.trackManager.onResidueMouseOver.on(async (resNum) => {
             this.emitOnSequenceMouseOn.emit(resNum);
-            this.plugin.highlightMouseOverResidue(resNum);
+            this.structureViewer.highlightMouseOverResidue(resNum);
             this.mouseOverHighlightedResidueInSequence = resNum;
         });
 
         this.trackManager.onFragmentMouseOut.on(() => {
             this.emitOnSequenceMouseOff.emit();
-            this.plugin.highlightMouseOverResidue(undefined);
+            this.structureViewer.highlightMouseOverResidue(undefined);
         });
     }
 
     public isStructureLoaded(): boolean {
-        return this.plugin.isLoaded();
+        return this.structureViewer.isLoaded();
     }
 
     public highlightInStructure(resNum: number, chain?: string): void {
-        this.plugin.highlight(resNum, chain);
+        this.structureViewer.highlight(resNum, chain);
     }
 
     public unhighlightInStructure(): void {
-        this.plugin.unhighlight();
+        this.structureViewer.unhighlight();
     }
 
     public unhighlightInSequence(): void {
@@ -149,10 +149,10 @@ export class MolArt<StructureConfig> {
         );
     }
     public focusInStructure(resNum: number, radius = 0, chain?: string): void {
-        this.plugin.focus(resNum, chain, radius);
+        this.structureViewer.focus(resNum, chain, radius);
     }
     public getStructureController(): StructureViewer<StructureConfig> {
-        return this.plugin;
+        return this.structureViewer;
     }
     public getSequenceController(): TrackManager | undefined {
         return this.trackManager;
@@ -168,7 +168,7 @@ export class MolArt<StructureConfig> {
     ) {
         if (output) {
             this.activeChainStructureMapping = output.mapping[output.chain]?.fragmentMappings ?? [];
-            await this.plugin.load(
+            await this.structureViewer.load(
                 output,
                 config.structure,
                 this.trackManager?.getMarkedFragments() ?? []
@@ -181,7 +181,7 @@ export class MolArt<StructureConfig> {
             windowWidth <= this.minWindowWidth &&
             (!this.previousWindowWidth || this.previousWindowWidth > this.minWindowWidth)
         ) {
-            $(this.plugin.getOuterElement())
+            $(this.structureViewer.getOuterElement())
                 .css("left", "0")
                 .css("top", this.nightingaleWrapper.offsetHeight + "px")
                 .css("width", "100%")
@@ -191,7 +191,7 @@ export class MolArt<StructureConfig> {
             windowWidth > this.minWindowWidth &&
             (!this.previousWindowWidth || this.previousWindowWidth <= this.minWindowWidth)
         ) {
-            $(this.plugin.getOuterElement())
+            $(this.structureViewer.getOuterElement())
                 .css("left", "50%")
                 .css("top", "0")
                 .css("width", "calc(50% - 2px)")
@@ -199,7 +199,7 @@ export class MolArt<StructureConfig> {
             $(this.nightingaleWrapper).css("width", "calc(50% - 2px)");
         }
         this.previousWindowWidth = windowWidth;
-        this.plugin.handleResize();
+        this.structureViewer.handleResize();
     }
 }
 
