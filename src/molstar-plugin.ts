@@ -50,7 +50,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         label: new HighlightFinderMolstarEvent(new MolstarLabelSeqIdExtractor())
     };
     private plugin: PluginContext;
-    private readonly emitOnHover = createEmitter<Residue | null>();
+    private readonly emitOnHover = createEmitter<Residue | undefined>();
     public readonly onHover = this.emitOnHover.event;
     private readonly emitOnHighlightChange = createEmitter<Highlight[]>();
     public readonly onHighlightChange = this.emitOnHighlightChange.event;
@@ -100,7 +100,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarStructureCo
         this.plugin.canvas3d?.interaction.hover.subscribe((event: Canvas3D.HoverEvent) => {
             const structureElementLoci = getStructureElementLoci(event.current.loci);
             if (this.mouseOverHighlightedResiduesInStructure.length > 0 && !structureElementLoci) {
-                this.emitOnHover.emit(null);
+                this.emitOnHover.emit(undefined);
                 this.mouseOverHighlightedResiduesInStructure = [];
                 this.updateHighlight(event);
             } else if (

@@ -5,14 +5,10 @@ import { Residue } from "./types/residue";
 
 export default interface StructureViewer<StructureConfig> {
     onLoaded: SealedEvent<void>;
-    onHover: SealedEvent<Residue | null>;
+    onHover: SealedEvent<Residue | undefined>;
     onHighlightChange: SealedEvent<Highlight[]>;
     handleResize(): void;
-    load(
-        output: Output,
-        structure: StructureConfig,
-        markedFragments: TrackFragment[]
-    ): Promise<void>;
+    load(output: Output, config: StructureConfig, markedFragments: TrackFragment[]): Promise<void>;
     overpaintFragments(fragments: TrackFragment[]): void;
     highlightMouseOverResidue(resNum?: number): void;
     isLoaded(): boolean;
