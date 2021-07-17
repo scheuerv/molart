@@ -75,7 +75,7 @@
                                 "VARIATION",
                                 "STRUCTURAL",
                             ],
-                            exclusions: [
+                            categoryExclusions: [
                                 "PREDICT_PROTEIN",
                                 "SEQUENCE_INFORMATION",
                                 "STRUCTURAL",
@@ -93,11 +93,10 @@
                     // ]
                 }
             };
-            new Molart.MolArt(
+            window.MolArt = new Molart.MolArt(
                 new Molart.MolstarPlugin(document.getElementById("ma-structure-wrapper")),
-                document.getElementById("ma-sequence-wrapper"),
-                config
-            );
+                document.getElementById("ma-sequence-wrapper")
+            ).loadConfig(config);
         </script>
     </body>
 </html>

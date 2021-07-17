@@ -5,9 +5,10 @@ import { Highlight } from "uniprot-nightingale/src/types/highlight";
 import { TrackManagerBuilder } from "uniprot-nightingale/src/index";
 import { createEmitter } from "ts-typed-events";
 import StructureViewer from "./structure-viewer";
-import { Config as SequenceConfig } from "uniprot-nightingale/src/types/config";
+import { SequenceConfig } from "uniprot-nightingale/src/types/config";
 import TrackManager from "uniprot-nightingale/src/manager/track-manager";
 import { Output } from "uniprot-nightingale/src/types/accession";
+import { Interval } from "uniprot-nightingale/src/types/interval";
 
 require("./main.css");
 
@@ -15,7 +16,6 @@ export class MolArt<StructureConfig> {
     private trackManager?: TrackManager;
     private previousWindowWidth: number | undefined = undefined;
     private readonly minWindowWidth = 1500;
-    private activeChainStructureMapping: FragmentMapping[] = [];
     private highligtedInSequence?: Highlight;
     private mouseOverHighlightedResidueInSequence?: number;
     private readonly emitOnSequenceMouseOn = createEmitter<number>();
@@ -31,9 +31,8 @@ export class MolArt<StructureConfig> {
     private readonly emitOnSequenceViewerReady = createEmitter<void>();
     public readonly onSequenceViewerReady = this.emitOnSequenceViewerReady.event;
     constructor(
-        private readonly structureViewer: StructureViewer<StructureConfig>,
-        private readonly nightingaleWrapper: HTMLElement,
-        config: Config<StructureConfig>
+        private readonly structureViewer: StructureViewer<StructureConfig, Residue>,
+        private readonly nightingaleWrapper: HTMLElement
     ) {
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
@@ -50,7 +49,6 @@ export class MolArt<StructureConfig> {
             }
         });
         resizeObserver.observe(this.nightingaleWrapper);
-        this.loadConfig(config);
         this.structureViewer.onLoaded.on(() => {
             this.emitOnStructureLoaded.emit();
         });
@@ -123,7 +121,6 @@ export class MolArt<StructureConfig> {
 
     public unhighlightInSequence(): void {
         this.highligtedInSequence = undefined;
-        this.trackManager?.clearHighlights();
         if (this.mouseOverHighlightedResidueInSequence) {
             this.trackManager?.setHighlights([
                 {
@@ -131,6 +128,8 @@ export class MolArt<StructureConfig> {
                     sequenceEnd: this.mouseOverHighlightedResidueInSequence
                 }
             ]);
+        } else {
+            this.trackManager?.clearHighlights();
         }
     }
 
@@ -157,17 +156,14 @@ export class MolArt<StructureConfig> {
     public getSequenceController(): TrackManager | undefined {
         return this.trackManager;
     }
-    public getSequenceStructureRange(): number[][] {
-        return this.activeChainStructureMapping.map((fragmentMapping) => {
-            return [fragmentMapping.sequenceStart, fragmentMapping.sequenceEnd];
-        });
+    public getSequenceStructureRange(): Interval[] {
+        return this.trackManager?.getActiveOutput()?.observedIntervals ?? [];
     }
     private async loadStructureFromOutput(
         output: Output | undefined,
         config: Config<StructureConfig>
     ) {
         if (output) {
-            this.activeChainStructureMapping = output.mapping[output.chain]?.fragmentMappings ?? [];
             await this.structureViewer.load(
                 output,
                 config.structure,
