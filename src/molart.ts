@@ -1,5 +1,3 @@
-import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
-import { Residue } from "./types/residue";
 import $ from "jquery";
 import { Highlight } from "uniprot-nightingale/src/types/highlight";
 import { TrackManagerBuilder } from "uniprot-nightingale/src/index";
@@ -12,7 +10,7 @@ import { Interval } from "uniprot-nightingale/src/types/interval";
 
 require("./main.css");
 
-export class MolArt<StructureConfig> {
+export class MolArt<StructureConfig, Residue> {
     private trackManager?: TrackManager;
     private previousWindowWidth: number | undefined = undefined;
     private readonly minWindowWidth = 1500;
@@ -150,7 +148,7 @@ export class MolArt<StructureConfig> {
     public focusInStructure(resNum: number, radius = 0, chain?: string): void {
         this.structureViewer.focus(resNum, chain, radius);
     }
-    public getStructureController(): StructureViewer<StructureConfig> {
+    public getStructureController(): StructureViewer<StructureConfig, Residue> {
         return this.structureViewer;
     }
     public getSequenceController(): TrackManager | undefined {

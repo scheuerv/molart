@@ -1,9 +1,8 @@
 import { SealedEvent } from "ts-typed-events";
 import { Output, TrackFragment } from "uniprot-nightingale/src/types/accession";
 import { Highlight } from "uniprot-nightingale/src/types/highlight";
-import { Residue } from "./types/residue";
 
-export default interface StructureViewer<StructureConfig> {
+export default interface StructureViewer<StructureConfig, Residue> {
     onLoaded: SealedEvent<void>;
     onHover: SealedEvent<Residue | undefined>;
     onHighlightChange: SealedEvent<Highlight[]>;

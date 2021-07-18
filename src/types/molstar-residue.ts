@@ -1,4 +1,4 @@
-export type Residue = {
+export type MolstarResidue = {
     authName: string;
     authSeqNumber: number;
     chain: {

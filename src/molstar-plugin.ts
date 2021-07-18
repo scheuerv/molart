@@ -31,7 +31,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap";
 import "bootstrap-multiselect";
 import "bootstrap-multiselect/dist/css/bootstrap-multiselect.css";
-import { Residue } from "./types/residue";
+import { MolstarResidue } from "./types/molstar-residue";
 import { Highlight } from "uniprot-nightingale/src/types/highlight";
 import StructureViewer from "./structure-viewer";
 require("Molstar/mol-plugin-ui/skin/light.scss");
@@ -44,14 +44,14 @@ type ExtraHiglight = {
     readonly key: string;
 };
 
-export default class MolstarPlugin implements StructureViewer<MolstarPluginConfig> {
+export default class MolstarPlugin implements StructureViewer<MolstarPluginConfig, MolstarResidue> {
     private highlightFinderMolstarEvent: Record<string, HighlightFinderMolstarEvent> = {
         auth: new HighlightFinderMolstarEvent(new MolstarAuthSeqIdExtractor()),
         label: new HighlightFinderMolstarEvent(new MolstarLabelSeqIdExtractor())
     };
     private readonly selectedHighlights: Set<string> = new Set();
     private plugin: PluginContext;
-    private readonly emitOnHover = createEmitter<Residue | undefined>();
+    private readonly emitOnHover = createEmitter<MolstarResidue | undefined>();
     public readonly onHover = this.emitOnHover.event;
     private readonly emitOnHighlightChange = createEmitter<Highlight[]>();
     public readonly onHighlightChange = this.emitOnHighlightChange.event;
@@ -115,7 +115,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
             ) {
                 const structureElement = StructureElement.Stats.ofLoci(structureElementLoci);
                 const location = structureElement.firstElementLoc;
-                const residue: Residue = {
+                const residue: MolstarResidue = {
                     authName: StructureProperties.atom.auth_comp_id(location),
                     name: StructureProperties.atom.label_comp_id(location),
                     isHet: StructureProperties.residue.hasMicroheterogeneity(location),
