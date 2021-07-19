@@ -34,6 +34,7 @@ import "bootstrap-multiselect/dist/css/bootstrap-multiselect.css";
 import { MolstarResidue } from "./types/molstar-residue";
 import { Highlight } from "uniprot-nightingale/src/types/highlight";
 import StructureViewer from "./structure-viewer";
+import { PluginConfig } from "molstar/lib/mol-plugin/config";
 require("Molstar/mol-plugin-ui/skin/light.scss");
 
 type ExtraHiglight = {
@@ -85,7 +86,8 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
                         isExpanded: false,
                         showControls: false
                     }
-                }
+                },
+                config: [[PluginConfig.Viewport.ShowControls, false]]
             }
         );
         this.target.append($("<div/>").addClass("ma-transparency-slider").append(this.slider)[0]);
