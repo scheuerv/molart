@@ -23,80 +23,13 @@
         <div id="ma-structure-wrapper"></div>
 
         <script>
-            const config = {
-                structure: {
-                    extraHighlights: [
-                        {
-                            label: "ball and stick",
-                            props: {
-                                type: "ball-and-stick",
-                                typeParams: { alpha: 1 },
-                                color: "uniform",
-                                colorParams: { value: 0x00ff00 },
-                                size: "uniform",
-                                sizeParams: { value: 10 }
-                            },
-                            residue: {
-                                residueNumFrom: 90,
-                                residueNumTo: 110
-                            },
-
-                            atom: ["CA", "CE"]
-                        },
-                        {
-                            label: "molecular surface",
-                            props: {
-                                type: "molecular-surface",
-                                typeParams: {
-                                    alpha: 0.5,
-                                    visuals: ["molecular-surface-wireframe"],
-                                    // probeRadius: 0,
-                                    // resolution: 1.25,
-                                    quality: "high"
-                                },
-                                color: "uniform",
-                                colorParams: { value: 0x0000ff }
-                            },
-                            residue: {
-                                residueNumFrom: 60,
-                                residueNumTo: 62
-                            },
-                            chain: ["A", "I"]
-                        }
-                    ]
-                },
-                sequence: {
-                    uniprotId: "P37840" //"P06702" //"P29274" //"P37840" //"Q8WZ42" //"O00330" //"P37840", //"P37840",//"P05067",//Q8WZ42",
-                    //sequence: MolArtExamples.sequence,
-                    /* pdbIds: ["6cu7", "2m55"],
-                            smrIds: ["3q27.1", "2n0a.1"],
-                            categoryOrder: [
-                                "PREDICT_PROTEIN",
-                                "VARIATION",
-                                "STRUCTURAL",
-                            ],
-                            categoryExclusions: [
-                                "PREDICT_PROTEIN",
-                                "SEQUENCE_INFORMATION",
-                                "STRUCTURAL",
-                                "TOPOLOGY",
-                                "MUTAGENESIS",
-                                "MOLECULE_PROCESSING",
-                            ],*/
-                    // sequenceStructureMapping: MolArtExamples.sequenceStructureMapping
-                    // customDataSources: [
-                    //     {
-                    //         source: "CUSTOM",
-                    //         useExtension: false,
-                    //         data: MolArtExamples.customFeatures
-                    //     }
-                    // ]
-                }
-            };
-            window.MolArt = new Molart.MolArt(
+            const molart = new Molart.MolArt(
                 new Molart.MolstarPlugin(document.getElementById("ma-structure-wrapper")),
                 document.getElementById("ma-sequence-wrapper")
-            ).loadConfig(config);
+            );
+            //"P37840", //"P06702" //"P29274" //"P37840" //"Q8WZ42" //"O00330",//"P05067",//Q8WZ42",
+            window.MolArt = molart;
+            molart.loadConfig(MolArtExamples.config);
         </script>
     </body>
 </html>

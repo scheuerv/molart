@@ -1,5 +1,5 @@
-import { FragmentMapping, Mapping } from "uniprot-nightingale/src/types/mapping";
-import { findUniprotIntervalsFromUniprotSequence } from "uniprot-nightingale/src/utils/fragment-mapping-utils";
+import { FragmentMapping, Mapping } from "uniprot-nightingale/lib/types/mapping";
+import { findUniprotIntervalsFromUniprotSequence } from "uniprot-nightingale/lib/utils/fragment-mapping-utils";
 
 export default class HighlightFinderNightingaleEvent {
     public calculate(

@@ -1,7 +1,7 @@
 import * as blender from "color-blend";
 import ColorConvert from "color-convert";
 import { RGB } from "color-convert/conversions";
-import { TrackFragment } from "uniprot-nightingale/src/types/accession";
+import { TrackFragment } from "uniprot-nightingale/lib/types/accession";
 
 export function mixFragmentColors(fragments: TrackFragment[]): TrackFragment[] {
     const mixedColorFragments: TrackFragment[] = [];

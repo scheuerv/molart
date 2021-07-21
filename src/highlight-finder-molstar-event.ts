@@ -1,8 +1,8 @@
 import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
 import { StructureElement, StructureProperties } from "Molstar/mol-model/structure";
 import { getStructureElementLoci } from "./molstar-utils";
-import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
-import { Highlight } from "uniprot-nightingale/src/types/highlight";
+import { FragmentMapping } from "uniprot-nightingale/lib/types/mapping";
+import { Highlight } from "uniprot-nightingale/lib/types/highlight";
 
 export interface SeqIdExtractor {
     extractSeqId(e: Canvas3D.HoverEvent): number | undefined;

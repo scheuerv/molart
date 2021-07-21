@@ -1,4 +1,4 @@
-import { FragmentMapping, Mapping } from "uniprot-nightingale/src/types/mapping";
+import { FragmentMapping, Mapping } from "uniprot-nightingale/lib/types/mapping";
 import HighlightFinderNightingaleEvent from "../src/highlight-finder-nightingale-event";
 
 describe("HighlightFinderNightingaleEvent tests", function () {

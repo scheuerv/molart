@@ -2,8 +2,8 @@ import HighlightFinderMolstarEvent, { SeqIdExtractor } from "../src/highlight-fi
 import { Representation } from "Molstar/mol-repr/representation";
 import { ModifiersKeys } from "Molstar/mol-util/input/input-observer";
 import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";
-import { FragmentMapping } from "uniprot-nightingale/src/types/mapping";
-import { Highlight } from "uniprot-nightingale/src/types/highlight";
+import { FragmentMapping } from "uniprot-nightingale/lib/types/mapping";
+import { Highlight } from "uniprot-nightingale/lib/types/highlight";
 
 describe("HighlightFinderMolstarEvent tests", function () {
     const fakeHoverEvent: Canvas3D.HoverEvent = {

@@ -1,4 +1,4 @@
-import { TrackFragment } from "uniprot-nightingale/src/types/accession";
+import { TrackFragment } from "uniprot-nightingale/lib/types/accession";
 import { mixFragmentColors } from "../src/fragment-color-mixer";
 describe("FragmentColorMixer tests", function () {
     it("no fragments", async () => {

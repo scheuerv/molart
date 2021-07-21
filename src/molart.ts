@@ -1,12 +1,12 @@
 import $ from "jquery";
-import { Highlight } from "uniprot-nightingale/src/types/highlight";
-import { TrackManagerBuilder } from "uniprot-nightingale/src/index";
+import { Highlight } from "uniprot-nightingale/lib/types/highlight";
+import { TrackManagerBuilder } from "uniprot-nightingale/lib/index";
 import { createEmitter } from "ts-typed-events";
 import StructureViewer from "./structure-viewer";
-import { SequenceConfig } from "uniprot-nightingale/src/types/config";
-import TrackManager from "uniprot-nightingale/src/manager/track-manager";
-import { Output } from "uniprot-nightingale/src/types/accession";
-import { Interval } from "uniprot-nightingale/src/types/interval";
+import { SequenceConfig } from "uniprot-nightingale/lib/types/config";
+import TrackManager from "uniprot-nightingale/lib/manager/track-manager";
+import { Output } from "uniprot-nightingale/lib/types/accession";
+import { Interval } from "uniprot-nightingale/lib/types/interval";
 
 require("./main.css");
 
@@ -32,6 +32,16 @@ export class MolArt<StructureConfig, Residue> {
         private readonly structureViewer: StructureViewer<StructureConfig, Residue>,
         private readonly nightingaleWrapper: HTMLElement
     ) {
+        // this.onSequenceMouseOn.on((num) => console.log("onSequenceMouseOn: " + num));
+        // this.onSequenceMouseOff.on(() => console.log("onSequenceMouseOff"));
+        // this.onStructureMouseOff.on(() => console.log("onStructureMouseOff"));
+        // this.onStructureMouseOn.on((residue) => console.log("emitOnStructureMouseOn: " + residue));
+        // this.onStructureLoaded.on(() => console.log("onStructureLoaded"));
+        // this.onSequenceViewerReady.on(() => console.log("onSequenceViewerReady"));
+        // this.plugin.onHighlightChange.on((highlight) =>
+        //     console.log("onHighlightChange: " + highlight)
+        // );
+
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 if (entry.contentBoxSize[0]) {
