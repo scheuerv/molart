@@ -1,4 +1,3 @@
-import { data } from "./custom-structure-data-pdb";
 //import { data } from "./custom-structure-data-mmcif";
 
 export const sequence =
@@ -14,9 +13,9 @@ export const sequenceStructureMapping = [
         pdb_id: "5uig",
         chain_id: "A",
         structure: {
-            format: "pdb", //valid parameters are pdb and mmcif
-            data: data //the structure in the PDB or mmcif format
-            //url: "https://www.ebi.ac.uk/pdbe/static/entry/5uig_updated.cif"
+            format: "mmcif", //valid parameters are pdb and mmcif
+            //data: data //the structure in the PDB or mmcif format
+            url: "https://www.ebi.ac.uk/pdbe/static/entry/5uig_updated.cif"
         },
         start: 27, // where the structure begins with respect to the full molecule sequence
         end: 438, // where the structure ends with respect to the full molecule sequence

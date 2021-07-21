@@ -1,6 +1,11 @@
 export const customFeatures = {
-    sequence:
-        "MLPGLALLLLAAWTARALEVPTDGNAGLLAEPQIAMFCGRLNMHMNVQNGKWDSDPSGTKTCIDTKEGILQYCQEVYPELQITNVVEANQPVTIQNWCKRGRKQCKTHPHFVIPYRCLVGEFVSDALLVPDKCKFLHQERMDVCETHLHWHTVAKETCSEKSTNLHDYGMLLPCGIDKFRGVEFVCCPLAEESDNVDSADAEEDDSDVWWGGADTDYADGSEDKVVEVAEEEEVAEVEEEEADDDEDDEDGDEVEEEAEEPYEEATERTTSIATTTTTTTESVEEVVREVCSEQAETGPCRAMISRWYFDVTEGKCAPFFYGGCGGNRNNFDTEEYCMAVCGSAMSQSLLKTTQEPLARDPVKLPTTAASTPDAVDKYLETPGDENEHAHFQKAKERLEAKHRERMSQVMREWEEAERQAKNLPKADKKAVIQHFQEKVESLEQEAANERQQLVETHMARVEAMLNDRRRLALENYITALQAVPPRPRHVFNMLKKYVRAEQKDRQHTLKHFEHVRMVDPKKAAQIRSQVMTHLRVIYERMNQSLSLLYNVPAVAEEIQDEVDELLQKEQNYSDDVLANMISEPRISYGNDALMPSLTETKTTVELLPVNGEFSLDDLQPWHSFGADSVPANTENEVEPVDARPAADRGLTTRPGSGLTNIKTEEISEVKMDAEFRHDSGYEVHHQKLVFFAEDVGSNKGAIIGLMVGGVVIATVIVITLVMLKKKQYTSIHHGVVEVDAAVTPEERHLSKMQQNGYENPTYKFFEQMQN",
+    sequence: `MPIMGSSVYITVELAIAVLAILGNVLVCWAVWLNSNLQNVTNYFVVSLAAADIAVGVLAI
+PFAITISTGFCAACHGCLFIACFVLVLTQSSIFSLLAIAIDRYIAIRIPLRYNGLVTGTR
+AKGIIAICWVLSFAIGLTPMLGWNNCGQPKEGKNHSQGCGEGQVACLFEDVVPMNYMVYF
+NFFACVLVPLLLMLGVYLRIFLAARRQLKQMESQPLPGERARSTLQKEVHAAKSLAIIVG
+LFALCWLPLHIINCFTFFCPDCSHAPLWLMYLAIVLSHTNSVVNPFIYAYRIREFRQTFR
+KIIRSHVLRQQEPFKAAGTSARVLAAHGSDGEQVSLRLNGHPPGVWANGSAPHPERRPNG
+YALGLVSGGSAQESQGNTGLPDVELLSHELKGVCPEPPGLDDPLAQDGAGVS`,
     features: [
         {
             type: "UNIQUE_MAXQ",
@@ -46,14 +51,6 @@ export const customFeatures = {
             type: "UNIQUE_MAXQ",
             category: "PROTEOMICS",
             description: "MaxQuant",
-            begin: "672",
-            end: "678",
-            color: "#00B88A"
-        },
-        {
-            type: "UNIQUE_MAXQ",
-            category: "PROTEOMICS",
-            description: "MaxQuant",
             begin: "72",
             end: "83",
             color: "#00B88A"
@@ -64,14 +61,6 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "52",
             end: "61",
-            color: "#00B88A"
-        },
-        {
-            type: "UNIQUE_MAXQ",
-            category: "PROTEOMICS",
-            description: "MaxQuant",
-            begin: "688",
-            end: "697",
             color: "#00B88A"
         },
         {
@@ -88,38 +77,6 @@ export const customFeatures = {
             description: "MaxQuant",
             begin: "181",
             end: "188",
-            color: "#FFCC33"
-        },
-        {
-            type: "NON_UNIQUE_MAXQ",
-            category: "PROTEOMICS",
-            description: "MaxQuant",
-            begin: "417",
-            end: "423",
-            color: "#FFCC33"
-        },
-        {
-            type: "NON_UNIQUE_MAXQ",
-            category: "PROTEOMICS",
-            description: "MaxQuant",
-            begin: "391",
-            end: "402",
-            color: "#FFCC33"
-        },
-        {
-            type: "NON_UNIQUE_MAXQ",
-            category: "PROTEOMICS",
-            description: "MaxQuant",
-            begin: "523",
-            end: "530",
-            color: "#FFCC33"
-        },
-        {
-            type: "NON_UNIQUE_MAXQ",
-            category: "PROTEOMICS",
-            description: "MaxQuant",
-            begin: "732",
-            end: "741",
             color: "#FFCC33"
         },
         {
@@ -142,34 +99,6 @@ export const customFeatures = {
             description: "Inherited through a sequence alignment",
             begin: "168",
             end: "168"
-        },
-        {
-            type: "CATALYTIC_SITE",
-            category: "DOMAINS_AND_SITES",
-            description: "Inherited through a sequence alignment",
-            begin: "677",
-            end: "677"
-        },
-        {
-            type: "CATALYTIC_SITE",
-            category: "DOMAINS_AND_SITES",
-            description: "Inherited through a sequence alignment",
-            begin: "681",
-            end: "681"
-        },
-        {
-            type: "CATALYTIC_SITE",
-            category: "DOMAINS_AND_SITES",
-            description: "Inherited through a sequence alignment",
-            begin: "684",
-            end: "684"
-        },
-        {
-            type: "CATALYTIC_SITE",
-            category: "DOMAINS_AND_SITES",
-            description: "Inherited through a sequence alignment",
-            begin: "685",
-            end: "685"
         },
         {
             type: "NOVEL_FEATURE",
@@ -356,44 +285,6 @@ export const customFeatures = {
                     predAlgorithmNameType: "SIFT"
                 }
             ]
-        },
-        {
-            type: "VARIANT",
-            category: "VARIATION",
-            description: "same UP mutation",
-            alternativeSequence: "P",
-            begin: "723",
-            end: "723",
-            wildType: "L",
-            predictions: [
-                {
-                    predictionValType: "looking bad",
-                    score: 0.0301,
-                    predAlgorithmNameType: "PolyPhen"
-                },
-                {
-                    predictionValType: "tolerated",
-                    score: 0.67,
-                    predAlgorithmNameType: "SIFT"
-                }
-            ]
-        },
-        {
-            type: "VARIANT",
-            category: "VARIATION",
-            alternativeSequence: "G",
-            begin: "717",
-            end: "717",
-            wildType: "V",
-            consequenceType: "missense"
-        },
-        {
-            type: "VARIANT",
-            category: "VARIATION",
-            alternativeSequence: "G",
-            begin: "737",
-            end: "737",
-            wildType: "V"
         }
     ]
 };
