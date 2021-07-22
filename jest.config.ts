@@ -13,7 +13,9 @@ export default {
     collectCoverageFrom: [
         "<rootDir>/src/**/*.ts",
         "!<rootDir>/src/molstar-utils.ts",
-        "!<rootDir>/src/examples"
+        "!<rootDir>/src/examples/**",
+        "!<rootDir>/src/example.ts",
+        "!<rootDir>/src/types/**"
     ],
 
     // The directory where Jest should output its coverage files

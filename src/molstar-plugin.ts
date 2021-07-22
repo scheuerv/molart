@@ -6,8 +6,8 @@ import { createPlugin } from "Molstar/mol-plugin-ui";
 import { DefaultPluginUISpec } from "Molstar/mol-plugin-ui/spec";
 import { createEmitter } from "ts-typed-events";
 import HighlightFinderMolstarEvent, {
-    MolstarAuthSeqIdExtractor,
-    MolstarLabelSeqIdExtractor
+    MolstarAuthIdExtractor,
+    MolstarLabelIdExtractor
 } from "./highlight-finder-molstar-event";
 import { getStructureElementLoci } from "./molstar-utils";
 import { StateObjectSelector } from "Molstar/mol-state";
@@ -47,8 +47,8 @@ type ExtraHiglight = {
 
 export default class MolstarPlugin implements StructureViewer<MolstarPluginConfig, MolstarResidue> {
     private highlightFinderMolstarEvent: Record<string, HighlightFinderMolstarEvent> = {
-        auth: new HighlightFinderMolstarEvent(new MolstarAuthSeqIdExtractor()),
-        label: new HighlightFinderMolstarEvent(new MolstarLabelSeqIdExtractor())
+        auth: new HighlightFinderMolstarEvent(new MolstarAuthIdExtractor()),
+        label: new HighlightFinderMolstarEvent(new MolstarLabelIdExtractor())
     };
     private readonly selectedHighlights: Set<string> = new Set();
     private plugin: PluginContext;
@@ -145,7 +145,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         if (this.structureInfo) {
             const highlights = this.highlightFinderMolstarEvent[
                 this.structureInfo.idType
-            ].calculate(event, this.activeChainStructureMapping);
+            ].calculate(event, this.structureInfo.mapping);
             this.highlightedResiduesInStructure.forEach((loci) => {
                 this.plugin.managers.interactivity.lociHighlights.highlight({
                     loci: loci
