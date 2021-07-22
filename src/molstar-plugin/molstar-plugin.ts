@@ -95,10 +95,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
             this.setTransparency(this.slider.value);
         });
 
-        $("<div/>")
-            .addClass("ma-structure-viewer-header")
-            .append($("<i/>").addClass("fas fa-download fa-2x"))
-            .prependTo(this.target);
+        $("<div/>").addClass("ma-structure-viewer-header").prependTo(this.target);
 
         this.plugin.canvas3d?.interaction.hover.subscribe((event: Canvas3D.HoverEvent) => {
             const structureElementLoci = getStructureElementLoci(event.current.loci);
