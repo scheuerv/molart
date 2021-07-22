@@ -32,15 +32,6 @@ export class MolArt<StructureConfig, Residue> {
         private readonly structureViewer: StructureViewer<StructureConfig, Residue>,
         private readonly nightingaleWrapper: HTMLElement
     ) {
-        // this.onSequenceMouseOn.on((num) => console.log("onSequenceMouseOn: " + num));
-        // this.onSequenceMouseOff.on(() => console.log("onSequenceMouseOff"));
-        // this.onStructureMouseOff.on(() => console.log("onStructureMouseOff"));
-        // this.onStructureMouseOn.on((residue) => console.log("emitOnStructureMouseOn: " + residue));
-        // this.onStructureLoaded.on(() => console.log("onStructureLoaded"));
-        // this.onSequenceViewerReady.on(() => console.log("onSequenceViewerReady"));
-        // this.plugin.onHighlightChange.on((highlight) =>
-        //     console.log("onHighlightChange: " + highlight)
-        // );
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 if (entry.contentBoxSize[0]) {

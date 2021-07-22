@@ -1,7 +1,10 @@
-import { FragmentMapping, Mapping } from "uniprot-nightingale/lib/types/mapping";
+import { Mapping } from "uniprot-nightingale/lib/types/mapping";
 import { findUniprotIntervalsFromUniprotSequence } from "uniprot-nightingale/lib/utils/fragment-mapping-utils";
+import { SequenceToStructureMapper } from "./sequence-to-structure-mapper";
 
 export default class HighlightFinderNightingaleEvent {
+    private readonly sequenceToStructureMapper: SequenceToStructureMapper =
+        new SequenceToStructureMapper();
     public calculate(
         sequenceResidueNumber: number,
         structureMapping?: Mapping,
@@ -10,18 +13,15 @@ export default class HighlightFinderNightingaleEvent {
         const mappedResidueNumberForChains: Map<string, number> = new Map();
         if (structureMapping) {
             Object.entries(structureMapping).forEach(([chainId, chainMapping]) => {
-                for (let i = 0; i < chainMapping.fragmentMappings.length; i++) {
-                    const fragmentMapping = chainMapping.fragmentMappings[i];
-                    if (
-                        fragmentMapping.sequenceStart <= sequenceResidueNumber &&
-                        fragmentMapping.sequenceEnd >= sequenceResidueNumber
-                    ) {
-                        mappedResidueNumberForChains.set(
-                            format == "mmcif" ? chainMapping.structAsymId : chainId,
-                            this.mapPosition(sequenceResidueNumber, fragmentMapping)
-                        );
-                        break;
-                    }
+                const mappedPosition = this.sequenceToStructureMapper.getMappedPositionFromResidue(
+                    sequenceResidueNumber,
+                    chainMapping.fragmentMappings
+                );
+                if (mappedPosition) {
+                    mappedResidueNumberForChains.set(
+                        format == "mmcif" ? chainMapping.structAsymId : chainId,
+                        mappedPosition
+                    );
                 }
             });
         }
@@ -44,7 +44,7 @@ export default class HighlightFinderNightingaleEvent {
                     fragmentMappings
                 );
                 intervals.forEach((interval) => {
-                    const startMapped = this.getMappedPositionFromResidue(
+                    const startMapped = this.sequenceToStructureMapper.getMappedPositionFromResidue(
                         interval.start,
                         fragmentMappings
                     );
@@ -58,35 +58,5 @@ export default class HighlightFinderNightingaleEvent {
         }
 
         return rangesForChains;
-    }
-
-    private getMappedPositionFromResidue(
-        sequenceResidueNumber: number,
-        chainMapping: FragmentMapping[]
-    ) {
-        const fragmentMapping = this.getFragmentMapping(sequenceResidueNumber, chainMapping);
-        if (fragmentMapping) {
-            return this.mapPosition(sequenceResidueNumber, fragmentMapping);
-        }
-    }
-    private mapPosition(sequenceResidueNumber: number, fragmentMapping: FragmentMapping) {
-        return (
-            sequenceResidueNumber + fragmentMapping.structureStart - fragmentMapping.sequenceStart
-        );
-    }
-
-    private getFragmentMapping(
-        sequenceResidueNumber: number,
-        structureMapping: FragmentMapping[]
-    ): FragmentMapping | undefined {
-        for (let i = 0; i < structureMapping.length; i++) {
-            const fragmentMapping = structureMapping[i];
-            if (
-                fragmentMapping.sequenceStart <= sequenceResidueNumber &&
-                fragmentMapping.sequenceEnd >= sequenceResidueNumber
-            ) {
-                return fragmentMapping;
-            }
-        }
     }
 }
