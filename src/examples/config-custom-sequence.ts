@@ -9,7 +9,6 @@ export const configCustomSequence = {
         customDataSources: [
             {
                 source: "CUSTOM",
-                useExtension: false,
                 data: customFeatures
             }
         ]

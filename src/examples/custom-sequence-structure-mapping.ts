@@ -17,31 +17,49 @@ export const sequenceStructureMapping = [
             data: data //the structure in the PDB or mmcif format
             //url: "https://www.ebi.ac.uk/pdbe/static/entry/5uig_updated.cif"
         },
-        start: 27, // where the structure begins with respect to the full molecule sequence
-        end: 438, // where the structure ends with respect to the full molecule sequence
-        unp_start: 1, // where the structure begins with respect to the sequence (the sequence does not have to covert the full molecule, therefore seqStart does not have to be 1)
-        unp_end: 316, // where the structure ends with respect to the sequence,
+        // where the structure begins with respect to the full molecule sequence (structure index)
+        start: 27,
+        // where the structure ends with respect to the full molecule sequence (structure index)
+        end: 438,
+        // where the structure begins with respect to the sequence (sequence index)
+        unp_start: 1,
+        // where the structure ends with respect to the sequence (sequence index)
+        unp_end: 316,
+        //
         mappings: {
+            //mapping for chain A
             A: {
+                //we use struct_asym_id when data format is mmcif
                 struct_asym_id: "A",
+                //sequence structure mappings
                 fragment_mappings: [
                     {
                         entity_id: 1,
+                        //structure end index
                         end: { residue_number: 234 },
+                        //structure start index
                         start: { residue_number: 27 },
+                        //sequence end index
                         unp_end: 208,
+                        //sequence start index
                         unp_start: 1
                     },
                     {
                         entity_id: 1,
+                        //structure end index
                         end: { residue_number: 438 },
+                        //structure start index
                         start: { residue_number: 341 },
+                        //sequence end index
                         unp_end: 316,
+                        //sequence start index
                         unp_start: 219
                     }
                 ]
             }
         },
+        // observed fragments coverage
+        // data in the same format as provided by ebi on https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/{pdbId}
         polymer_coverage: {
             "5uig": {
                 molecules: [
@@ -49,6 +67,7 @@ export const sequenceStructureMapping = [
                         entity_id: 1,
                         chains: [
                             {
+                                //structure start/end indices for observed ranges
                                 observed: [
                                     {
                                         start: { residue_number: 30 },

@@ -6,6 +6,7 @@ import "./index.html";
 import "./basic-example.html";
 import "./custom-sequence-example.html";
 import { configCustomHiglightCategoryPdbIdSetting } from "./config-custom-higlights-category-pdbid";
+import { configCustomSequenceFetchData } from "./config-custom-sequence-fetch-data";
 
 export {
     config,
@@ -13,5 +14,6 @@ export {
     sequenceStructureMapping,
     sequence,
     customFeatures,
-    configCustomHiglightCategoryPdbIdSetting
+    configCustomHiglightCategoryPdbIdSetting,
+    configCustomSequenceFetchData
 };
