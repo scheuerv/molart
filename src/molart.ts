@@ -5,7 +5,7 @@ import { createEmitter } from "ts-typed-events";
 import StructureViewer from "./structure-viewer";
 import { SequenceConfig } from "uniprot-nightingale/lib/types/config";
 import TrackManager from "uniprot-nightingale/lib/manager/track-manager";
-import { Output } from "uniprot-nightingale/lib/types/accession";
+import { StructureInfo } from "uniprot-nightingale/lib/types/accession";
 import { Interval } from "uniprot-nightingale/lib/types/interval";
 
 require("./main.css");
@@ -41,7 +41,6 @@ export class MolArt<StructureConfig, Residue> {
         // this.plugin.onHighlightChange.on((highlight) =>
         //     console.log("onHighlightChange: " + highlight)
         // );
-
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 if (entry.contentBoxSize[0]) {
@@ -95,9 +94,9 @@ export class MolArt<StructureConfig, Residue> {
             this.emitOnSequenceViewerReady.emit();
         });
         this.trackManager = await trackManagerBuilder.load(this.nightingaleWrapper);
-        this.loadStructureFromOutput(this.trackManager.getActiveOutput(), config);
-        this.trackManager.onSelectedStructure.on(async (output) =>
-            this.loadStructureFromOutput(output, config)
+        this.loadStructureFromStructureInfo(this.trackManager.getActiveStructureInfo(), config);
+        this.trackManager.onSelectedStructure.on(async (structureInfo) =>
+            this.loadStructureFromStructureInfo(structureInfo, config)
         );
 
         this.trackManager.onMarkChange.on((fragments) => {
@@ -165,15 +164,15 @@ export class MolArt<StructureConfig, Residue> {
         return this.trackManager;
     }
     public getSequenceStructureRange(): Interval[] {
-        return this.trackManager?.getActiveOutput()?.observedIntervals ?? [];
+        return this.trackManager?.getActiveStructureInfo()?.observedIntervals ?? [];
     }
-    private async loadStructureFromOutput(
-        output: Output | undefined,
+    private async loadStructureFromStructureInfo(
+        structureInfo: StructureInfo | undefined,
         config: Config<StructureConfig>
     ) {
-        if (output) {
+        if (structureInfo) {
             await this.structureViewer.load(
-                output,
+                structureInfo,
                 config.structure,
                 this.trackManager?.getMarkedFragments() ?? []
             );

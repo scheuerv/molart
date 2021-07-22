@@ -10,11 +10,9 @@ const sharedConfig = {
         loader: 'ts-loader',
         test: /\.(ts|tsx)$/,
         include: [
-          path.resolve(__dirname, 'src'),
-          path.resolve(__dirname, 'node_modules/uniprot-nightingale/src')
+          path.resolve(__dirname, 'src')
         ],
         options: {
-          allowTsInNodeModules: true,
           configFile: path.resolve(__dirname, 'tsconfig.json')
         }
       },
@@ -113,7 +111,7 @@ function createExampleEntryPoint(name) {
     entry: [path.resolve(__dirname, `src/examples/index.ts`)],
     output: {
       filename: `${name}.js`,
-      path: path.resolve(__dirname, `dist/`),
+      path: path.resolve(__dirname, `dist/examples`),
       library: {
         type: 'assign',
         name: 'MolArtExamples'

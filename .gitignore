@@ -9,3 +9,6 @@ yalc.lock
 .vscode/launch.json
 coverage
 dist
+molart-*.tgz
+src/example.ts
+lib

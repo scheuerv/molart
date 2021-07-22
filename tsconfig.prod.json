@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "composite": false,
+        "target": "es2020",
+        "jsx": "react",
+        "outDir": "lib",
+        "sourceMap": false,
+        "declaration": true,
+        "strictNullChecks": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "baseUrl": ".",
+        "alwaysStrict": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": true,
+        "strictFunctionTypes": true,
+        "allowUmdGlobalAccess": true,
+        "allowJs": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "paths": {
+            "Molstar/*": ["node_modules/molstar/lib/*"]
+        }
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "src/examples/**/*", "src/example.ts"]
+}

@@ -1,5 +1,5 @@
 import { SealedEvent } from "ts-typed-events";
-import { Output, TrackFragment } from "uniprot-nightingale/lib/types/accession";
+import { StructureInfo, TrackFragment } from "uniprot-nightingale/lib/types/accession";
 import { Highlight } from "uniprot-nightingale/lib/types/highlight";
 
 export default interface StructureViewer<StructureConfig, Residue> {
@@ -7,7 +7,11 @@ export default interface StructureViewer<StructureConfig, Residue> {
     onHover: SealedEvent<Residue | undefined>;
     onHighlightChange: SealedEvent<Highlight[]>;
     handleResize(): void;
-    load(output: Output, config: StructureConfig, markedFragments: TrackFragment[]): Promise<void>;
+    load(
+        structureInfo: StructureInfo,
+        config: StructureConfig,
+        markedFragments: TrackFragment[]
+    ): Promise<void>;
     overpaintFragments(fragments: TrackFragment[]): void;
     highlightMouseOverResidue(resNum?: number): void;
     isLoaded(): boolean;

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+        />
+        <title>MolArt</title>
+        <style></style>
+        <link rel="stylesheet" type="text/css" href="main.css" />
+        <link
+            rel="stylesheet"
+            href="https://ebi.emblstatic.net/web_guidelines/EBI-Icon-fonts/v1.2/fonts.css"
+            type="text/css"
+            media="all"
+        />
+        <script type="text/javascript" src="../index.js"></script>
+        <script type="text/javascript" src="./example.js"></script>
+    </head>
+    <body>
+        <div id="ma-sequence-wrapper"></div>
+        <div id="ma-structure-wrapper"></div>
+
+        <script>
+            const molart = new Molart.MolArt(
+                new Molart.MolstarPlugin(document.getElementById("ma-structure-wrapper")),
+                document.getElementById("ma-sequence-wrapper")
+            );
+            molart.loadConfig(MolArtExamples.configCustomSequence);
+        </script>
+    </body>
+</html>

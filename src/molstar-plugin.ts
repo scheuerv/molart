@@ -16,7 +16,7 @@ import { Expression } from "molstar/lib/mol-script/language/expression";
 import { StructureRepresentationBuiltInProps } from "molstar/lib/mol-plugin-state/helpers/structure-representation-params";
 import { MolScriptBuilder } from "Molstar/mol-script/language/builder";
 import { Loci as StructureLoci } from "Molstar/mol-model/structure/structure/element/loci";
-import { Output, TrackFragment } from "uniprot-nightingale/lib/types/accession";
+import { StructureInfo, TrackFragment } from "uniprot-nightingale/lib/types/accession";
 import { Color } from "Molstar/mol-util/color";
 import { Structure, StructureSelection } from "Molstar/mol-model/structure";
 import { StateTransforms } from "molstar/lib/mol-plugin-state/transforms";
@@ -58,7 +58,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
     public readonly onHighlightChange = this.emitOnHighlightChange.event;
     private mouseOverHighlightedResiduesInStructure: StructureElement.Loci[] = [];
     private highlightedResiduesInStructure: Loci[] = [];
-    private output?: Output;
+    private structureInfo?: StructureInfo;
     private molecularSurfaceRepr?: StateObjectSelector;
     private cartoonRepr?: StateObjectSelector;
     private activeChainStructureMapping: FragmentMapping[];
@@ -142,11 +142,10 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         });
     }
     private updateHighlight(event: Canvas3D.HoverEvent) {
-        if (this.output) {
-            const highlights = this.highlightFinderMolstarEvent[this.output.idType].calculate(
-                event,
-                this.activeChainStructureMapping
-            );
+        if (this.structureInfo) {
+            const highlights = this.highlightFinderMolstarEvent[
+                this.structureInfo.idType
+            ].calculate(event, this.activeChainStructureMapping);
             this.highlightedResiduesInStructure.forEach((loci) => {
                 this.plugin.managers.interactivity.lociHighlights.highlight({
                     loci: loci
@@ -161,23 +160,23 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
     }
 
     public async load(
-        output: Output,
+        structureInfo: StructureInfo,
         config: MolstarPluginConfig,
         markedFragments: TrackFragment[]
     ): Promise<void> {
-        const chainMapping = output.mapping[output.chain];
+        const chainMapping = structureInfo.mapping[structureInfo.chain];
         if (!chainMapping) {
-            throw Error(`No mapping for ${output.pdbId} ${output.chain}`);
+            throw Error(`No mapping for ${structureInfo.pdbId} ${structureInfo.chain}`);
         }
         this.activeChainStructureMapping = chainMapping.fragmentMappings;
-        this.output = output;
+        this.structureInfo = structureInfo;
         this.molecularSurfaceRepr = undefined;
         this.cartoonRepr = undefined;
         await this.plugin.clear();
-        const loadedData: StateObjectSelector = await this.loadData(output);
+        const loadedData: StateObjectSelector = await this.loadData(structureInfo);
         const trajectory = await this.plugin.builders.structure.parseTrajectory(
             loadedData,
-            output.format
+            structureInfo.format
         );
         const model = await this.plugin.builders.structure.createModel(trajectory);
         this.structure = await this.plugin.builders.structure.createStructure(model);
@@ -292,8 +291,8 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
     }
     private async createRepresentations() {
         let expressions: Expression[] = [];
-        if (this.output) {
-            Object.entries(this.output!.mapping).forEach(([chainId, chainMapping]) => {
+        if (this.structureInfo) {
+            Object.entries(this.structureInfo!.mapping).forEach(([chainId, chainMapping]) => {
                 const chainExpressions = chainMapping.fragmentMappings.map((fragment) => {
                     return MolScriptBuilder.core.logic.and([
                         MolScriptBuilder.core.rel.inRange([
@@ -303,7 +302,9 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
                         ]),
                         MolScriptBuilder.core.rel.eq([
                             this.getFilterTypeAsym(),
-                            this.output?.format == "mmcif" ? chainMapping.structAsymId : chainId
+                            this.structureInfo?.format == "mmcif"
+                                ? chainMapping.structAsymId
+                                : chainId
                         ])
                     ]);
                 });
@@ -406,19 +407,19 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         }
     }
 
-    private async loadData(output: Output): Promise<StateObjectSelector> {
+    private async loadData(structureInfo: StructureInfo): Promise<StateObjectSelector> {
         let loadedData: StateObjectSelector;
-        if (output.url) {
+        if (structureInfo.url) {
             loadedData = await this.plugin.builders.data.download(
                 {
-                    url: Asset.Url(output.url)
+                    url: Asset.Url(structureInfo.url)
                 },
                 { state: { isGhost: true } }
             );
-        } else if (output.data) {
+        } else if (structureInfo.data) {
             loadedData = await this.plugin.builders.data.rawData(
                 {
-                    data: output.data
+                    data: structureInfo.data
                 },
                 { state: { isGhost: true } }
             );
@@ -494,7 +495,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
                 this.highlightFinderNightingaleEvent.calculateFromRange(
                     fragmentStart,
                     fragmentEnd,
-                    this.output?.mapping
+                    this.structureInfo?.mapping
                 );
             rangesForChains.forEach((ranges, chain) => {
                 ranges.forEach((range) => {
@@ -555,37 +556,37 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
     }
 
     private getFilterTypeSeq() {
-        if (this.output) {
-            switch (this.output.idType) {
+        if (this.structureInfo) {
+            switch (this.structureInfo.idType) {
                 case "label":
                     return MolScriptBuilder.struct.atomProperty.macromolecular.label_seq_id();
                 case "auth":
                     return MolScriptBuilder.struct.atomProperty.macromolecular.auth_seq_id();
             }
         }
-        throw new Error("No output or unknown id type");
+        throw new Error("No structureInfo or unknown id type");
     }
     private getFilterTypeAsym() {
-        if (this.output) {
-            switch (this.output.idType) {
+        if (this.structureInfo) {
+            switch (this.structureInfo.idType) {
                 case "label":
                     return MolScriptBuilder.struct.atomProperty.macromolecular.label_asym_id();
                 case "auth":
                     return MolScriptBuilder.struct.atomProperty.macromolecular.auth_asym_id();
             }
         }
-        throw new Error("No output or unknown id type");
+        throw new Error("No structureInfo or unknown id type");
     }
     private getFilterTypeAtom() {
-        if (this.output) {
-            switch (this.output.idType) {
+        if (this.structureInfo) {
+            switch (this.structureInfo.idType) {
                 case "label":
                     return MolScriptBuilder.struct.atomProperty.macromolecular.label_atom_id();
                 case "auth":
                     return MolScriptBuilder.struct.atomProperty.macromolecular.auth_atom_id();
             }
         }
-        throw new Error("No output or unknown id type");
+        throw new Error("No structureInfo or unknown id type");
     }
 
     private findLocisFromResidueNumber(resNum: number, chain?: string): StructureElement.Loci[] {
@@ -593,8 +594,8 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         if (data) {
             const positionForChain = this.highlightFinderNightingaleEvent.calculate(
                 resNum,
-                this.output?.mapping,
-                this.output?.format
+                this.structureInfo?.mapping,
+                this.structureInfo?.format
             );
             const locis: StructureElement.Loci[] = [];
             positionForChain.forEach((position, chainId) => {
