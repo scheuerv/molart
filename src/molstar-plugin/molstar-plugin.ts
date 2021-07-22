@@ -45,6 +45,9 @@ type ExtraHiglight = {
     readonly key: string;
 };
 
+/**
+ * Implementation of StructureViewer that is wrapping Mol* plugin.
+ */
 export default class MolstarPlugin implements StructureViewer<MolstarPluginConfig, MolstarResidue> {
     private highlightFinderMolstarEvent: Record<string, HighlightFinderMolstarEvent> = {
         auth: new HighlightFinderMolstarEvent(new MolstarAuthIdExtractor()),
@@ -90,6 +93,8 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
                 config: [[PluginConfig.Viewport.ShowControls, false]]
             }
         );
+
+        //transparency slider to adjust molecular surface transparency
         this.target.append($("<div/>").addClass("ma-transparency-slider").append(this.slider)[0]);
         this.slider.addEventListener("change", () => {
             this.setTransparency(this.slider.value);
@@ -97,6 +102,9 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
 
         $("<div/>").addClass("ma-structure-viewer-header").prependTo(this.target);
 
+        //listens for hover event over anything on Mol* plugin and then it determines
+        //if it is loci of type StructureElement. If it is StructureElement then it
+        //propagates this event from MolstarPlugin transformed as MolstarResidue.
         this.plugin.canvas3d?.interaction.hover.subscribe((event: Canvas3D.HoverEvent) => {
             const structureElementLoci = getStructureElementLoci(event.current.loci);
             if (this.mouseOverHighlightedResiduesInStructure.length > 0 && !structureElementLoci) {
@@ -138,6 +146,10 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
             }
         });
     }
+    /**
+     * Maps structure index from event to sequence index and emits it as
+     * highlight event.
+     */
     private updateHighlight(event: Canvas3D.HoverEvent) {
         if (this.structureInfo) {
             const highlights = this.highlightFinderMolstarEvent[
@@ -156,6 +168,10 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         return this.target;
     }
 
+    /**
+     * Creates visualization based on the Structure info and config. Config
+     * is specific for MolstarPlugin and can contain user defined highlights
+     */
     public async load(structureInfo: StructureInfo, config: MolstarPluginConfig): Promise<void> {
         const chainMapping = structureInfo.mapping[structureInfo.chain];
         if (!chainMapping) {
@@ -176,6 +192,8 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         let select: HTMLSelectElement | undefined;
         const extraHighlights = config.extraHighlights;
         const extraHiglightsSelectors: ExtraHiglight[] = [];
+
+        //Creates multiselect component if there are any user highlights
         if (extraHighlights && extraHighlights.length > 0) {
             const previousSelect = $(this.target).find(".ma-structure-viewer-header select")[0];
 
@@ -235,6 +253,8 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
                 key: highlightKey
             });
             if (this.selectedHighlights.has(highlightKey)) {
+                //if there are selected highlights in select component from previously
+                //loaded structure
                 await this.plugin.builders.structure.representation.addRepresentation(
                     highlightComponent!,
                     extraHighlight.props
@@ -247,6 +267,8 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
                     buttonClass: "custom-select"
                 });
                 $(select).multiselect("setOptions", {
+                    //when selected different extra highlights from our multiselect
+                    //component it updates 3D visualization
                     onChange: async (option: JQuery, checked: boolean) => {
                         const extraHighlight =
                             extraHiglightsSelectors[parseInt($(option).val() as string)];
@@ -281,6 +303,11 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
             this.emitOnLoaded.emit();
         }
     }
+
+    /**
+     * It creates Mol* representations (3D objects) based on our StructureInfo object
+     * Unmapped parts are colored gray and rest has default color.
+     */
     private async createRepresentations() {
         let expressions: Expression[] = [];
         if (this.structureInfo) {
@@ -451,6 +478,9 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         this.highlightStructureResidues();
     }
 
+    /**
+     * Unhighlights all highlights except mouse over highlights and user extra highlights
+     */
     public unhighlight(): void {
         this.highlightedResiduesInStructure = [];
         this.plugin.managers.interactivity.lociHighlights.clearHighlights();
@@ -461,6 +491,9 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         });
     }
 
+    /**
+     * Highlights given ranges using mixed colors if they overlap.
+     */
     public overpaintFragments(fragments: TrackFragment[]): void {
         if (!this.molecularSurfaceRepr || !this.cartoonRepr) return;
         const data = this.plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
@@ -529,10 +562,13 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         });
     }
 
+    /**
+     * Create selection for given range in (optionally) given chain from structure.
+     */
     private selectFragment(
         from: number,
         to: number,
-        data: Structure,
+        structure: Structure,
         chain?: string
     ): StructureSelection {
         const filter: Record<string, Expression> = {
@@ -543,7 +579,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         }
         return Script.getStructureSelection(
             MolScriptBuilder.struct.generator.atomGroups(filter),
-            data
+            structure
         );
     }
 
@@ -604,6 +640,9 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         return [];
     }
 
+    /**
+     * Adjust transparency of molecular surface using molstar api
+     */
     private setTransparency(value?: string) {
         if (value === undefined) return;
         const parsedValue = parseFloat(value) / 100;

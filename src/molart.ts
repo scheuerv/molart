@@ -9,7 +9,12 @@ import { StructureInfo } from "uniprot-nightingale/lib/types/accession";
 import { Interval } from "uniprot-nightingale/lib/types/interval";
 
 require("./main.css");
-
+/**
+ * Main class of molart module. It manages and creates TrackManager which is object
+ * from uniprot-nightingale module. It also manages given StructureViewer (e.g. MolstarPlugin).
+ * It synchronizes highlighting of corresponding parts in both mentioned components.
+ * It handles window resizing.
+ */
 export class MolArt<StructureConfig, Residue> {
     private trackManager?: TrackManager;
     private previousWindowWidth: number | undefined = undefined;
@@ -32,6 +37,8 @@ export class MolArt<StructureConfig, Residue> {
         private readonly structureViewer: StructureViewer<StructureConfig, Residue>,
         private readonly nightingaleWrapper: HTMLElement
     ) {
+        //If the structure viewer is below sequence viewer and sequence wiever
+        //changes its height we need to move structure viewer
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 if (entry.contentBoxSize[0]) {
@@ -68,6 +75,10 @@ export class MolArt<StructureConfig, Residue> {
         window.addEventListener("resize", this.windowResize.bind(this));
     }
 
+    /**
+     * Creates a new TrackManager from the given config and loads new structure.
+     * @param config
+     */
     public async loadConfig(config: Config<StructureConfig>): Promise<void> {
         const trackManagerBuilder: TrackManagerBuilder = TrackManagerBuilder.createDefault(
             config.sequence
@@ -120,6 +131,7 @@ export class MolArt<StructureConfig, Residue> {
     public unhighlightInSequence(): void {
         this.highligtedInSequence = undefined;
         if (this.mouseOverHighlightedResidueInSequence) {
+            //keep mouseover highlights
             this.trackManager?.setHighlights([
                 {
                     sequenceStart: this.mouseOverHighlightedResidueInSequence,
@@ -154,24 +166,30 @@ export class MolArt<StructureConfig, Residue> {
     public getSequenceController(): TrackManager | undefined {
         return this.trackManager;
     }
+
+    /**
+     * Returns ranges of observed fragments in active structure.
+     * @returns Intervals of observed fragments in active structure.
+     */
     public getSequenceStructureRange(): Interval[] {
         return this.trackManager?.getActiveStructureInfo()?.observedIntervals ?? [];
     }
+
+    /**
+     * Calls load on structureViewer with given parameters
+     * @param structureInfo Information about structure necessary for loading it.
+     * @param config Structure viewer configuration.
+     */
     private async loadStructureFromStructureInfo(
         structureInfo: StructureInfo | undefined,
         config: Config<StructureConfig>
     ) {
         if (structureInfo) {
-            await this.structureViewer
-                .load(
-                    structureInfo,
-                    config.structure
-                )
-                .then(() => {
-                    this.structureViewer.overpaintFragments(
-                        this.trackManager?.getMarkedFragments() ?? []
-                    );
-                });
+            await this.structureViewer.load(structureInfo, config.structure).then(() => {
+                this.structureViewer.overpaintFragments(
+                    this.trackManager?.getMarkedFragments() ?? []
+                );
+            });
         }
     }
     private windowResize() {
@@ -180,6 +198,7 @@ export class MolArt<StructureConfig, Residue> {
             windowWidth <= this.minWindowWidth &&
             (!this.previousWindowWidth || this.previousWindowWidth > this.minWindowWidth)
         ) {
+            //put sequence viewer and structure viewer next to each other
             $(this.structureViewer.getOuterElement())
                 .css("left", "0")
                 .css("top", this.nightingaleWrapper.offsetHeight + "px")
@@ -190,6 +209,7 @@ export class MolArt<StructureConfig, Residue> {
             windowWidth > this.minWindowWidth &&
             (!this.previousWindowWidth || this.previousWindowWidth <= this.minWindowWidth)
         ) {
+            //put sequence viewer and structure viewer below each other
             $(this.structureViewer.getOuterElement())
                 .css("left", "50%")
                 .css("top", "0")

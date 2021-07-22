@@ -25,13 +25,25 @@ export default interface StructureViewer<StructureConfig, Residue> {
      */
     overpaintFragments(fragments: TrackFragment[]): void;
     /**
-     * Is called
+     * Is called when mouseover event from seuence wiever occured.
      * @param resNum Hovered residue index in sequence.
      */
     highlightMouseOverResidue(resNum?: number): void;
+    /**
+     * Should return true when some structure is loaded, otherwise it should return false.
+     */
     isLoaded(): boolean;
+    /**
+     * Should highlight given sequence index residue (possibly in given chain)
+     * in structure.
+     * @param resNum Sequence index residue.
+     * @param chain Chain in which the residue should be highlighted.
+     */
     highlight(resNum: number, chain?: string): void;
     unhighlight(): void;
     focus(resNum: number, chain?: string, radius?: number): void;
+    /**
+     * Should return element wrapping viewer.
+     */
     getOuterElement(): HTMLElement;
 }

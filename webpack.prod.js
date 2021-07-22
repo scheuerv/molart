@@ -84,9 +84,6 @@ function createEntryPoint(name) {
     externals: {
       "fs": 'require("fs")'
     },
-    devServer: {
-      port: 1341
-    },
     ignoreWarnings: [
       {
         module: /bootstrap-multiselect\.js\?/,
