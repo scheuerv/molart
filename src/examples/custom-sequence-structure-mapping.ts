@@ -1,4 +1,4 @@
-//import { data } from "./custom-structure-data-mmcif";
+import { data } from "./custom-structure-data-mmcif";
 
 export const sequence =
     "MPIMGSSVYITVELAIAVLAILGNVLVCWAVWLNSNLQNVTNYFVVSLAAADIAVGVLAI\n" +
@@ -14,8 +14,8 @@ export const sequenceStructureMapping = [
         chain_id: "A",
         structure: {
             format: "mmcif", //valid parameters are pdb and mmcif
-            //data: data //the structure in the PDB or mmcif format
-            url: "https://www.ebi.ac.uk/pdbe/static/entry/5uig_updated.cif"
+            data: data //the structure in the PDB or mmcif format
+            //url: "https://www.ebi.ac.uk/pdbe/static/entry/5uig_updated.cif"
         },
         start: 27, // where the structure begins with respect to the full molecule sequence
         end: 438, // where the structure ends with respect to the full molecule sequence
