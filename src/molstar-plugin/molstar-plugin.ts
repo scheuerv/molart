@@ -156,11 +156,7 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         return this.target;
     }
 
-    public async load(
-        structureInfo: StructureInfo,
-        config: MolstarPluginConfig,
-        markedFragments: TrackFragment[]
-    ): Promise<void> {
+    public async load(structureInfo: StructureInfo, config: MolstarPluginConfig): Promise<void> {
         const chainMapping = structureInfo.mapping[structureInfo.chain];
         if (!chainMapping) {
             throw Error(`No mapping for ${structureInfo.pdbId} ${structureInfo.chain}`);
@@ -281,7 +277,6 @@ export default class MolstarPlugin implements StructureViewer<MolstarPluginConfi
         }
         const loaded = await this.createRepresentations();
         this.setTransparency(this.slider?.value);
-        this.overpaintFragments(markedFragments);
         if (loaded) {
             this.emitOnLoaded.emit();
         }

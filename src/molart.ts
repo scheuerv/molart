@@ -162,11 +162,16 @@ export class MolArt<StructureConfig, Residue> {
         config: Config<StructureConfig>
     ) {
         if (structureInfo) {
-            await this.structureViewer.load(
-                structureInfo,
-                config.structure,
-                this.trackManager?.getMarkedFragments() ?? []
-            );
+            await this.structureViewer
+                .load(
+                    structureInfo,
+                    config.structure
+                )
+                .then(() => {
+                    this.structureViewer.overpaintFragments(
+                        this.trackManager?.getMarkedFragments() ?? []
+                    );
+                });
         }
     }
     private windowResize() {

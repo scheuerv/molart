@@ -3,10 +3,7 @@
     "version": "2.0.0-beta.0",
     "description": "MOLeculAR structure annoTator",
     "scripts": {
-        "build": "npm run build-webpack",
-        "build-webpack": "webpack --mode development",
-        "watch": "npm run watch-webpack",
-        "watch-webpack": "webpack -w --mode development",
+        "build": "webpack --config webpack.prod.js",
         "start": "webpack serve",
         "test": "jest --no-cache",
         "lint": "eslint . --ext .html,.ts",

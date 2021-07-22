@@ -38,11 +38,6 @@
     position: absolute;
 }
 
-i.fas.fa-download {
-    cursor: pointer;
-    float: right;
-}
-
 .ma-structure-viewer-header {
     height: 40px;
 }
