@@ -1,5 +1,5 @@
 import { FragmentMapping, Mapping } from "uniprot-nightingale/lib/types/mapping";
-import HighlightFinderNightingaleEvent from "../src/highlight-finder-nightingale-event";
+import HighlightFinderNightingaleEvent from "../src/molstar-plugin/highlight-finder-nightingale-event";
 
 describe("HighlightFinderNightingaleEvent tests", function () {
     let instance: HighlightFinderNightingaleEvent;

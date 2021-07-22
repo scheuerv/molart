@@ -1,5 +1,5 @@
 import { TrackFragment } from "uniprot-nightingale/lib/types/accession";
-import { mixFragmentColors } from "../src/fragment-color-mixer";
+import { mixFragmentColors } from "../src/molstar-plugin/fragment-color-mixer";
 describe("FragmentColorMixer tests", function () {
     it("no fragments", async () => {
         expect(mixFragmentColors([])).toEqual([]);

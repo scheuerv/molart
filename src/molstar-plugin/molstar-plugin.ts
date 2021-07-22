@@ -31,9 +31,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap";
 import "bootstrap-multiselect";
 import "bootstrap-multiselect/dist/css/bootstrap-multiselect.css";
-import { MolstarResidue } from "./types/molstar-residue";
+import { MolstarResidue } from "../types/molstar-residue";
 import { Highlight } from "uniprot-nightingale/lib/types/highlight";
-import StructureViewer from "./structure-viewer";
+import StructureViewer from "../structure-viewer";
 import { PluginConfig } from "molstar/lib/mol-plugin/config";
 require("Molstar/mol-plugin-ui/skin/light.scss");
 

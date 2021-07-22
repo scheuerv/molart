@@ -1,4 +1,6 @@
-export const configCustomHiglightCategoryPdbIdSetting = {
+import { MolstarPluginConfig } from "../molstar-plugin/molstar-plugin";
+import { Config } from "../molart";
+export const configCustomHiglightCategoryPdbIdSetting: Config<MolstarPluginConfig> = {
     structure: {
         extraHighlights: [
             {

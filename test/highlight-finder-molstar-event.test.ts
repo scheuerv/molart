@@ -1,4 +1,6 @@
-import HighlightFinderMolstarEvent, { IdExtractor } from "../src/highlight-finder-molstar-event";
+import HighlightFinderMolstarEvent, {
+    IdExtractor
+} from "../src/molstar-plugin/highlight-finder-molstar-event";
 import { Representation } from "Molstar/mol-repr/representation";
 import { ModifiersKeys } from "Molstar/mol-util/input/input-observer";
 import { Canvas3D } from "Molstar/mol-canvas3d/canvas3d";

@@ -1,4 +1,4 @@
-import { MolstarPluginConfig } from "../molstar-plugin";
+import { MolstarPluginConfig } from "../molstar-plugin/molstar-plugin";
 import { Config } from "../molart";
 
 export const config: Config<MolstarPluginConfig> = {

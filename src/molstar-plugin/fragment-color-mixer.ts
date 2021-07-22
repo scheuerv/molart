@@ -3,6 +3,12 @@ import ColorConvert from "color-convert";
 import { RGB } from "color-convert/conversions";
 import { TrackFragment } from "uniprot-nightingale/lib/types/accession";
 
+/**
+ * Find ranges where the given fragments overlap and for overlapping parts
+ * creates new fragments with color mixed from all color in these fragments.
+ * @returns Given fragments where overlaping parts are replaced by new
+ * fragments with mixed color.
+ */
 export function mixFragmentColors(fragments: TrackFragment[]): TrackFragment[] {
     const mixedColorFragments: TrackFragment[] = [];
     if (fragments.length > 0) {
@@ -75,6 +81,12 @@ export function mixFragmentColors(fragments: TrackFragment[]): TrackFragment[] {
     return mixedColorFragments;
 }
 
+/**
+ * Finds all fragments whose sequenceStart equals start.
+ * @param start Start.
+ * @param sortedFragments Fragments sorted by sequenceStart from the smallest to the largest.
+ * @returns Found fragments with sequenceStart equals start.
+ */
 function getStartsWith(start: number, sortedFragments: TrackFragment[]): [TrackFragment[], number] {
     const newFragments: TrackFragment[] = [];
     for (let i = 0; i < sortedFragments.length; i++) {
@@ -88,13 +100,18 @@ function getStartsWith(start: number, sortedFragments: TrackFragment[]): [TrackF
     return [newFragments, sortedFragments.length];
 }
 
-function getNearestEnd(openedFragments: TrackFragment[]): number {
-    if (openedFragments.length == 0) {
+/**
+ * Finds minimal sequenceEnd number of given fragments.
+ * @returns Minimal sequenceEnd.
+ * @throws Throws error when fragments are empty.
+ */
+function getNearestEnd(fragments: TrackFragment[]): number {
+    if (fragments.length == 0) {
         throw new Error("At least one fragment required");
     }
     let minEnd: number = Number.MAX_SAFE_INTEGER;
-    for (let i = 0; i < openedFragments.length; i++) {
-        const fragment: TrackFragment = openedFragments[i];
+    for (let i = 0; i < fragments.length; i++) {
+        const fragment: TrackFragment = fragments[i];
         if (fragment.sequenceEnd < minEnd) {
             minEnd = fragment.sequenceEnd;
         }
@@ -102,14 +119,19 @@ function getNearestEnd(openedFragments: TrackFragment[]): number {
     return minEnd;
 }
 
-function mixColor(openedFragments: TrackFragment[]): string {
-    if (openedFragments.length == 0) {
+/**
+ * Creates color from mix of all colors included in given fragments.
+ * @returns color in hex format
+ * @throws Throws error when fragments are empty.
+ */
+function mixColor(fragments: TrackFragment[]): string {
+    if (fragments.length == 0) {
         throw new Error("At least one fragment required");
     }
-    const color: RGB = ColorConvert.hex.rgb(openedFragments[0].color);
+    const color: RGB = ColorConvert.hex.rgb(fragments[0].color);
     let rgbaColor = { a: 0.5, r: color[0], g: color[1], b: color[2] };
-    for (let i = 1; i < openedFragments.length; i++) {
-        const nextColor: RGB = ColorConvert.hex.rgb(openedFragments[i].color);
+    for (let i = 1; i < fragments.length; i++) {
+        const nextColor: RGB = ColorConvert.hex.rgb(fragments[i].color);
         rgbaColor = blender.darken(rgbaColor, {
             a: 0.5,
             r: nextColor[0],
