@@ -223,6 +223,6 @@ export class MolArt<StructureConfig, Residue> {
 }
 
 export type Config<StructureConfig> = {
-    structure: StructureConfig;
-    sequence: SequenceConfig;
+    readonly structure: StructureConfig;
+    readonly sequence: SequenceConfig;
 };

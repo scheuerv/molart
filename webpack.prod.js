@@ -75,7 +75,7 @@ function createEntryPoint(name) {
     entry: [path.resolve(__dirname, `src/index.ts`)],
     output: {
       filename: `${name}.js`,
-      path: path.resolve(__dirname, `dist/`),
+      path: path.resolve(__dirname, `dist`),
       library: {
         type: "assign",
         name: "Molart"
@@ -99,7 +99,7 @@ function createExampleEntryPoint(name) {
     entry: [path.resolve(__dirname, `src/examples/index.ts`)],
     output: {
       filename: `${name}.js`,
-      path: path.resolve(__dirname, `dist/examples`),
+      path: path.resolve(__dirname, `dist`),
       library: {
         type: 'assign',
         name: 'MolArtExamples'
